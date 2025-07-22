@@ -22,7 +22,7 @@ const asignaciones = ref([])
 const error = ref('')
 
 const columns = [
-  { name: 'cuidador', label: 'Cuidador', field: 'nombre_cuidador' },
+  { name: 'cuidador', label: 'Cuidador', field: 'cuidador' },
   { name: 'paciente', label: 'Paciente', field: 'paciente' },
   { name: 'medicamento', label: 'Medicamento', field: 'medicamento' },
   { name: 'dias', label: 'Días', field: 'dias' },
