@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <body>
+    <button onclick="enviar()">Enviar Medicamento</button>
+    <pre id="res"></pre>
+    <script>
+      async function enviar() {
+        const res = await fetch(
+          'https://medialert-backend-1q8e.onrender.com/medicamentos_por_rut',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nombre: 'Paracetamol',
+              dosis: '500mg',
+              dias: ['Lunes', 'Miércoles', 'Viernes'],
+              horas: ['08:00', '20:00'],
+              rut_paciente: '16697384-8',
+            }),
+          },
+        )
+        document.getElementById('res').textContent = await res.text()
+      }
+    </script>
+  </body>
+</html>
