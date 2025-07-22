@@ -6,6 +6,8 @@
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
+        <q-input v-model="nombre" label="Nombre completo" filled />
+        <q-input v-model="telefono" label="Teléfono" filled />
         <q-input v-model="rut" label="RUT (sin puntos y con guion)" filled />
         <q-select v-model="rol" :options="['cuidador', 'paciente']" label="Rol" filled />
         <q-input v-model="contrasena" label="Contraseña" type="password" filled />
@@ -29,6 +31,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const nombre = ref('')
+const telefono = ref('')
 const rut = ref('')
 const contrasena = ref('')
 const rol = ref(null)
@@ -43,6 +47,8 @@ const registrar = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        nombre: nombre.value,
+        telefono: telefono.value,
         rut: rut.value,
         contrasena: contrasena.value,
         rol: rol.value,
@@ -58,6 +64,7 @@ const registrar = async () => {
       setTimeout(() => router.push('/login'), 1000)
     }
   } catch (err) {
+    console.error(err)
     error.value = 'No se pudo conectar al servidor'
   }
 }
