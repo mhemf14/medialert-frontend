@@ -22,18 +22,18 @@ const asignaciones = ref([])
 const error = ref('')
 
 const columns = [
-  { name: 'cuidador', label: 'Cuidador', field: 'cuidador' },
+  { name: 'cuidador', label: 'Cuidador', field: 'nombre_cuidador' },
   { name: 'paciente', label: 'Paciente', field: 'paciente' },
   { name: 'medicamento', label: 'Medicamento', field: 'medicamento' },
   { name: 'dias', label: 'Días', field: 'dias' },
   { name: 'horas', label: 'Horas', field: 'horas' },
-  { name: 'status', label: 'Status', field: 'status' },
 ]
 
 const cargarAsignaciones = async () => {
   try {
     const res = await api.get('/admin/asignaciones')
     asignaciones.value = res.data
+    console.log('Asignaciones:', res.data)
   } catch (err) {
     error.value = 'No se pudieron cargar las asignaciones'
     console.error(err)
