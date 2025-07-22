@@ -39,7 +39,7 @@ const login = async () => {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rut: rut.value, contrasena: contrasena.value })
+      body: JSON.stringify({ rut: rut.value, contrasena: contrasena.value }),
     })
 
     const data = await res.json()
@@ -55,6 +55,8 @@ const login = async () => {
       router.push('/cuidador')
     } else if (data.rol === 'paciente') {
       router.push('/paciente')
+    } else if (data.rol === 'admin') {
+      router.push('/admin')
     } else {
       error.value = 'Rol no reconocido'
     }
