@@ -6,13 +6,14 @@
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
-        <q-input v-model="nombre" label="Nombre completo" filled />
         <q-input v-model="rut" label="RUT (sin puntos y con guion)" filled />
-        <q-input v-model="telefono" label="Teléfono" filled />
         <q-select v-model="rol" :options="['cuidador', 'paciente']" label="Rol" filled />
         <q-input v-model="contrasena" label="Contraseña" type="password" filled />
         <q-banner v-if="error" class="bg-red text-white q-pa-sm">
           {{ error }}
+        </q-banner>
+        <q-banner v-if="success" class="bg-green text-white q-pa-sm">
+          {{ success }}
         </q-banner>
       </q-card-section>
 
@@ -26,35 +27,38 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from 'boot/axios'
 
 const router = useRouter()
-const nombre = ref('')
 const rut = ref('')
-const telefono = ref('')
-const rol = ref(null)
 const contrasena = ref('')
+const rol = ref(null)
 const error = ref('')
+const success = ref('')
 
 const registrar = async () => {
   error.value = ''
+  success.value = ''
   try {
-    await api.post('/usuarios', {
-      nombre: nombre.value,
-      rut: rut.value,
-      telefono: telefono.value,
-      rol: rol.value,
-      contrasena: contrasena.value,
+    const res = await fetch('https://medialert-backend-1q8e.onrender.com/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rut: rut.value,
+        contrasena: contrasena.value,
+        rol: rol.value,
+      }),
     })
 
-    router.push('/login')
-  } catch (err) {
-    console.error(err)
-    if (err.response && err.response.data?.error) {
-      error.value = err.response.data.error
+    const data = await res.json()
+
+    if (!res.ok) {
+      error.value = data.error || 'Error al registrar'
     } else {
-      error.value = 'No se pudo conectar al servidor'
+      success.value = 'Registro exitoso'
+      setTimeout(() => router.push('/login'), 1000)
     }
+  } catch (err) {
+    error.value = 'No se pudo conectar al servidor'
   }
 }
 </script>
