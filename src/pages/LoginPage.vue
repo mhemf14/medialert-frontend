@@ -25,7 +25,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-// ✅ Puedes mover esta constante a un archivo de config si quieres
+// 🔧 Configuración
 const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
 
 const router = useRouter()
@@ -43,6 +43,7 @@ const login = async () => {
     })
 
     const data = await res.json()
+    console.log('🟢 Usuario autenticado:', data) // 👀 Verifica qué llega
 
     if (!res.ok) {
       error.value = data.error || 'Error al iniciar sesión'
@@ -51,17 +52,19 @@ const login = async () => {
 
     localStorage.setItem('usuario', JSON.stringify(data))
 
-    if (data.rol === 'cuidador') {
+    const rol = data.rol?.toLowerCase().trim()
+
+    if (rol === 'cuidador') {
       router.push('/cuidador')
-    } else if (data.rol === 'paciente') {
+    } else if (rol === 'paciente') {
       router.push('/paciente')
-    } else if (data.rol === 'admin') {
+    } else if (rol === 'admin') {
       router.push('/admin')
     } else {
       error.value = 'Rol no reconocido'
     }
   } catch (err) {
-    console.error(err)
+    console.error('❌ Error al conectar al backend:', err)
     error.value = 'No se pudo conectar al servidor'
   }
 }
