@@ -1,7 +1,13 @@
+import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://medialert-backend-1q8e.onrender.com'
+  baseURL: 'https://medialert-backend-1q8e.onrender.com',
 })
 
-export default api
+export default boot(({ app }) => {
+  app.config.globalProperties.$axios = axios
+  app.config.globalProperties.$api = api
+})
+
+export { api }
