@@ -36,8 +36,32 @@ const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
 
+const validarRut = (valor: string) => {
+  const rutLimpio = valor.replace(/[^0-9kK]/g, '').toLowerCase()
+  if (rutLimpio.length < 2) {
+    return false
+  }
+  const cuerpo = rutLimpio.slice(0, -1)
+  const dvIngresado = rutLimpio.slice(-1)
+
+  let suma = 0
+  let factor = 2
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo.charAt(i)) * factor
+    factor = factor === 7 ? 2 : factor + 1
+  }
+  const dvEsperadoNum = 11 - (suma % 11)
+  const dvEsperado = dvEsperadoNum === 11 ? '0' : dvEsperadoNum === 10 ? 'k' : String(dvEsperadoNum)
+
+  return dvIngresado === dvEsperado
+}
+
 const login = async () => {
   error.value = ''
+  if (!validarRut(rut.value)) {
+    error.value = 'RUT inválido'
+    return
+  }
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
