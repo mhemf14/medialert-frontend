@@ -61,6 +61,7 @@ import { ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
+import { diasSemana } from 'src/constants/diasSemana'
 const $q = useQuasar()
 
 const nombre = ref('')
@@ -70,16 +71,6 @@ const dias = ref([])
 const horas = ref([])
 const horaTemporal = ref('')
 const loading = ref(false)
-
-const diasSemana = [
-  { label: 'Lunes', value: 'Lunes' },
-  { label: 'Martes', value: 'Martes' },
-  { label: 'Miércoles', value: 'Miércoles' },
-  { label: 'Jueves', value: 'Jueves' },
-  { label: 'Viernes', value: 'Viernes' },
-  { label: 'Sábado', value: 'Sábado' },
-  { label: 'Domingo', value: 'Domingo' },
-]
 
 function agregarHora(hora) {
   if (!horas.value.includes(hora)) {
