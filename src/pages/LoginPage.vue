@@ -1,8 +1,11 @@
 <template>
   <q-page class="flex flex-center">
     <q-card style="width: 400px">
-      <q-card-section>
-        <div class="text-h6">Iniciar Sesión</div>
+      <q-card-section class="flex flex-center q-pb-none">
+        <img src="../assets/medical-logo.svg" alt="Logo médico" style="width: 80px;" />
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <div class="text-h6 text-center">Iniciar Sesión</div>
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
