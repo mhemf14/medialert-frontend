@@ -9,28 +9,35 @@
       </q-card-section>
     </q-card>
 
-    <q-card v-for="medicamento in medicamentos" :key="medicamento.id" class="q-mb-md">
-      <q-card-section>
-        <div class="text-h6">{{ medicamento.nombre }}</div>
-        <div><strong>Dosis:</strong> {{ medicamento.dosis }}</div>
-        <div><strong>Días programados:</strong> {{ medicamento.dias }}</div>
-        <div><strong>Horario programado:</strong> {{ medicamento.horas }}</div>
+    <div v-if="loading" class="text-center q-pa-md">
+      <q-spinner color="primary" size="2em" />
+    </div>
 
-        <q-btn
-          class="q-mt-sm"
-          :color="medicamento.confirmado ? 'green-3' : 'positive'"
-          :label="medicamento.confirmado ? 'Toma Confirmada' : 'Confirmar toma'"
-          :disable="medicamento.confirmado"
-          @click="confirmarToma(medicamento)"
-        />
-      </q-card-section>
-    </q-card>
+    <template v-else>
+      <q-card v-for="medicamento in medicamentos" :key="medicamento.id" class="q-mb-md">
+        <q-card-section>
+          <div class="text-h6">{{ medicamento.nombre }}</div>
+          <div><strong>Dosis:</strong> {{ medicamento.dosis }}</div>
+          <div><strong>Días programados:</strong> {{ medicamento.dias }}</div>
+          <div><strong>Horario programado:</strong> {{ medicamento.horas }}</div>
+
+          <q-btn
+            class="q-mt-sm"
+            :color="medicamento.confirmado ? 'green-3' : 'positive'"
+            :label="medicamento.confirmado ? 'Toma Confirmada' : 'Confirmar toma'"
+            :disable="medicamento.confirmado"
+            @click="confirmarToma(medicamento)"
+          />
+        </q-card-section>
+      </q-card>
+    </template>
   </q-page>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useQuasar } from 'quasar'
+import { api } from 'boot/axios'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
@@ -42,6 +49,7 @@ const medicamentos = ref([])
 const horaActual = ref('')
 const $q = useQuasar()
 const usuario = JSON.parse(localStorage.getItem('usuario'))
+const loading = ref(false)
 
 function traducirDia(diaIngles) {
   const mapa = {
@@ -79,18 +87,18 @@ function confirmarToma(med) {
 
 let timer
 onMounted(async () => {
-  const res = await fetch(
-    `https://medialert-backend-1q8e.onrender.com/medicamentos_por_rut/${usuario.rut}`,
-  )
-  const data = await res.json()
+  loading.value = true
+  try {
+    const res = await api.get(`/medicamentos_por_rut/${usuario.rut}`)
+    const data = res.data
 
-  // Agregamos propiedad `confirmado` localmente para cada medicamento
-  medicamentos.value = data.map((med) => ({ ...med, confirmado: false }))
+    // Agregamos propiedad `confirmado` localmente para cada medicamento
+    medicamentos.value = data.map((med) => ({ ...med, confirmado: false }))
 
-  timer = setInterval(() => {
-    const ahora = dayjs().tz('America/Santiago').format('HH:mm')
-    horaActual.value = dayjs().tz('America/Santiago').format('HH:mm:ss')
-    const diaActual = traducirDia(dayjs().tz('America/Santiago').format('dddd'))
+    timer = setInterval(() => {
+      const ahora = dayjs().tz('America/Santiago').format('HH:mm')
+      horaActual.value = dayjs().tz('America/Santiago').format('HH:mm:ss')
+      const diaActual = traducirDia(dayjs().tz('America/Santiago').format('dddd'))
 
     medicamentos.value.forEach((med) => {
       const horas = med.horas ? med.horas.split(',').map((h) => h.trim()) : []
@@ -101,6 +109,15 @@ onMounted(async () => {
       }
     })
   }, 1000)
+  } catch (err) {
+    console.error('Error de conexión:', err)
+    $q.notify({
+      type: 'negative',
+      message: err.response?.data?.error || 'No se pudo conectar al servidor',
+    })
+  } finally {
+    loading.value = false
+  }
 })
 
 onUnmounted(() => {
