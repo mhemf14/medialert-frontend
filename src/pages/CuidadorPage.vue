@@ -5,53 +5,63 @@
         <div class="text-h6">Asignar Medicamento a Paciente</div>
       </q-card-section>
 
-      <q-card-section class="q-gutter-md">
-        <q-input v-model="nombre" label="Nombre del medicamento" filled />
-        <q-input v-model="dosis" label="Dosis" filled />
-        <q-input v-model="rutPaciente" label="RUT del paciente" filled />
+      <q-form @submit.prevent="agregarMedicamento">
+        <q-card-section class="q-gutter-md">
+          <q-input
+            v-model="nombre"
+            label="Nombre del medicamento"
+            filled
+            :rules="[(val) => !!val || 'Campo obligatorio']"
+          />
+          <q-input
+            v-model="dosis"
+            label="Dosis"
+            filled
+            :rules="[(val) => !!val || 'Campo obligatorio']"
+          />
+          <q-input
+            v-model="rutPaciente"
+            label="RUT del paciente"
+            filled
+            :rules="[(val) => !!val || 'Campo obligatorio']"
+          />
 
-        <div>
-          <div class="text-subtitle2">Selecciona los días:</div>
-          <q-option-group type="checkbox" :options="diasSemana" v-model="dias" inline />
-        </div>
-
-        <div>
-          <div class="text-subtitle2">Agrega las horas:</div>
-          <q-time v-model="horaTemporal" format24h @update:model-value="agregarHora" />
-          <div class="q-mt-sm">
-            <q-chip
-              v-for="(h, index) in horas"
-              :key="index"
-              color="primary"
-              text-color="white"
-              removable
-              @remove="eliminarHora(index)"
-            >
-              {{ h }}
-            </q-chip>
+          <div>
+            <div class="text-subtitle2">Selecciona los días:</div>
+            <q-option-group type="checkbox" :options="diasSemana" v-model="dias" inline />
           </div>
-        </div>
 
-        <q-banner v-if="error" class="bg-red text-white q-pa-sm">
-          {{ error }}
-        </q-banner>
-        <q-banner v-if="success" class="bg-green text-white q-pa-sm">
-          {{ success }}
-        </q-banner>
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn label="Agregar" color="primary" @click="agregarMedicamento" />
-      </q-card-actions>
+          <div>
+            <div class="text-subtitle2">Agrega las horas:</div>
+            <q-time v-model="horaTemporal" format24h @update:model-value="agregarHora" />
+            <div class="q-mt-sm">
+              <q-chip
+                v-for="(h, index) in horas"
+                :key="index"
+                color="primary"
+                text-color="white"
+                removable
+                @remove="eliminarHora(index)"
+              >
+                {{ h }}
+              </q-chip>
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn label="Agregar" color="primary" type="submit" :loading="loading" />
+        </q-card-actions>
+      </q-form>
     </q-card>
   </q-page>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useQuasar } from 'quasar'
+import { api } from 'boot/axios'
 
-// 👉 Puedes mover esto a un archivo de configuración global si prefieres
-const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
+const $q = useQuasar()
 
 const nombre = ref('')
 const dosis = ref('')
@@ -59,8 +69,7 @@ const rutPaciente = ref('')
 const dias = ref([])
 const horas = ref([])
 const horaTemporal = ref('')
-const error = ref('')
-const success = ref('')
+const loading = ref(false)
 
 const diasSemana = [
   { label: 'Lunes', value: 'Lunes' },
@@ -83,30 +92,18 @@ function eliminarHora(index) {
 }
 
 const agregarMedicamento = async () => {
-  error.value = ''
-  success.value = ''
+  loading.value = true
 
   try {
-    const res = await fetch(`${API_BASE_URL}/medicamentos_por_rut`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nombre: nombre.value,
-        dosis: dosis.value,
-        dias: dias.value,
-        horas: horas.value,
-        rut_paciente: rutPaciente.value,
-      }),
+    await api.post('/medicamentos_por_rut', {
+      nombre: nombre.value,
+      dosis: dosis.value,
+      dias: dias.value,
+      horas: horas.value,
+      rut_paciente: rutPaciente.value,
     })
 
-    const data = await res.json()
-
-    if (!res.ok) {
-      error.value = data.error || 'Error al agregar medicamento'
-      return
-    }
-
-    success.value = 'Medicamento agregado correctamente'
+    $q.notify({ type: 'positive', message: 'Medicamento agregado correctamente' })
     nombre.value = ''
     dosis.value = ''
     dias.value = []
@@ -115,7 +112,12 @@ const agregarMedicamento = async () => {
     horaTemporal.value = ''
   } catch (err) {
     console.error('Error de conexión:', err)
-    error.value = 'No se pudo conectar al servidor'
+    $q.notify({
+      type: 'negative',
+      message: err.response?.data?.error || 'No se pudo conectar al servidor',
+    })
+  } finally {
+    loading.value = false
   }
 }
 </script>
