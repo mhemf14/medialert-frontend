@@ -100,15 +100,15 @@ onMounted(async () => {
       horaActual.value = dayjs().tz('America/Santiago').format('HH:mm:ss')
       const diaActual = traducirDia(dayjs().tz('America/Santiago').format('dddd'))
 
-    medicamentos.value.forEach((med) => {
-      const horas = med.horas ? med.horas.split(',').map((h) => h.trim()) : []
-      const dias = med.dias ? med.dias.split(',').map((d) => d.trim()) : []
+      medicamentos.value.forEach((med) => {
+        const horas = med.horas ? med.horas.split(',').map((h) => h.trim()) : []
+        const dias = med.dias ? med.dias.split(',').map((d) => d.trim()) : []
 
-      if (horas.includes(ahora) && dias.includes(diaActual)) {
-        emitirAlarma()
-      }
-    })
-  }, 1000)
+        if (horas.includes(ahora) && dias.includes(diaActual)) {
+          emitirAlarma()
+        }
+      })
+    }, 1000)
   } catch (err) {
     console.error('Error de conexión:', err)
     $q.notify({
