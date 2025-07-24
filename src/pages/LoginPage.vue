@@ -34,10 +34,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
-//const $q = useQuasar()
 const router = useRouter()
 
 const rut = ref('')
