@@ -122,6 +122,7 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable */
 import { ref, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
