@@ -43,6 +43,11 @@ const login = async () => {
   }
 
   try {
+    $q.loading.show({
+      message: 'Ingresando...',
+      spinnerColor: 'primary',
+    })
+
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -52,6 +57,7 @@ const login = async () => {
     const data = await res.json()
 
     if (!res.ok) {
+      $q.loading.hide()
       error.value = data.error || 'Error al iniciar sesión'
       return
     }
@@ -65,26 +71,19 @@ const login = async () => {
     else if (rol === 'paciente') destino = '/paciente'
     else if (rol === 'admin') destino = '/admin'
     else {
+      $q.loading.hide()
       error.value = 'Rol no reconocido'
       return
     }
 
-    // ✅ Mostrar diálogo de carga
-    const dialog = $q.dialog({
-      title: 'Ingresando',
-      message: 'Por favor espera...',
-      progress: true,
-      persistent: true,
-      ok: false,
-    })
-
-    // Esperar 4 segundos y luego redirigir
+    // Esperar 4 segundos antes de redirigir
     setTimeout(() => {
-      dialog.hide()
+      $q.loading.hide()
       router.push(destino)
     }, 4000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
+    $q.loading.hide()
     error.value = 'No se pudo conectar al servidor'
   }
 }
