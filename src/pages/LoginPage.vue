@@ -87,7 +87,6 @@ const login = async () => {
       cargando.value = false
       router.push(destino)
     }, 4000)
-
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
     cargando.value = false
