@@ -1,27 +1,28 @@
 <template>
   <q-page class="q-pa-md">
+    <!-- FORMULARIO -->
     <q-card>
       <q-card-section>
         <div class="text-h6">Asignar Medicamento a Paciente</div>
       </q-card-section>
 
-        <q-form @submit.prevent="agregarMedicamento">
-          <q-card-section class="q-gutter-md">
-            <q-select
-              v-model="rutPaciente"
-              :options="pacientes"
-              option-label="nombre"
-              option-value="rut"
-              label="Paciente"
-              filled
-              :rules="[(val) => !!val || 'Campo obligatorio']"
-            />
-            <q-input
-              v-model="nombre"
-              label="Nombre del medicamento"
-              filled
-              :rules="[(val) => !!val || 'Campo obligatorio']"
-            />
+      <q-form @submit.prevent="agregarMedicamento">
+        <q-card-section class="q-gutter-md">
+          <q-select
+            v-model="rutPaciente"
+            :options="pacientes"
+            option-label="nombre"
+            option-value="rut"
+            label="Paciente"
+            filled
+            :rules="[(val) => !!val || 'Campo obligatorio']"
+          />
+          <q-input
+            v-model="nombre"
+            label="Nombre del medicamento"
+            filled
+            :rules="[(val) => !!val || 'Campo obligatorio']"
+          />
           <q-input
             v-model="dosis"
             label="Dosis"
@@ -57,6 +58,7 @@
       </q-form>
     </q-card>
 
+    <!-- MEDICAMENTOS DEL PACIENTE SELECCIONADO -->
     <q-card class="q-mt-md" v-if="medicamentos.length">
       <q-card-section class="bg-primary text-white">
         <div class="text-h6">Medicamentos del Paciente</div>
@@ -72,6 +74,7 @@
       </q-card-section>
     </q-card>
 
+    <!-- DIALOGO EDICION -->
     <q-dialog v-model="editDialog">
       <q-card style="min-width: 300px">
         <q-card-section class="text-h6">Editar Medicamento</q-card-section>
@@ -87,6 +90,29 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- TODOS LOS PACIENTES ASIGNADOS CON SUS MEDICAMENTOS -->
+    <q-card class="q-mt-md" v-if="pacientesConMedicamentos.length">
+      <q-card-section class="bg-secondary text-white">
+        <div class="text-h6">Pacientes con Medicamentos Asignados</div>
+      </q-card-section>
+
+      <q-card-section>
+        <div v-for="pac in pacientesConMedicamentos" :key="pac.rut" class="q-mb-md">
+          <div class="text-subtitle1">{{ pac.nombre }} ({{ pac.rut }})</div>
+          <q-list bordered separator>
+            <q-item v-for="med in pac.medicamentos" :key="med.id">
+              <q-item-section>
+                <q-item-label>{{ med.nombre }}</q-item-label>
+                <q-item-label caption>
+                  Dosis: {{ med.dosis }} | Días: {{ med.dias }} | Horas: {{ med.horas }}
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div>
+      </q-card-section>
+    </q-card>
   </q-page>
 </template>
 
@@ -96,7 +122,6 @@ import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
 const $q = useQuasar()
-
 const nombre = ref('')
 const dosis = ref('')
 const rutPaciente = ref('')
@@ -110,6 +135,7 @@ const pacientes = ref([])
 const medicamentos = ref([])
 const editDialog = ref(false)
 const editData = ref({ id: null, nombre: '', dosis: '', dias: '', horas: '' })
+const pacientesConMedicamentos = ref([])
 
 const columns = [
   { name: 'nombre', label: 'Medicamento', field: 'nombre', sortable: true },
@@ -133,6 +159,7 @@ onMounted(async () => {
   try {
     const res = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
     pacientes.value = res.data
+    await cargarPacientesConMedicamentos()
   } catch (err) {
     console.error('Error al cargar pacientes', err)
   }
@@ -150,6 +177,24 @@ async function cargarMedicamentos() {
     medicamentos.value = res.data
   } catch (err) {
     console.error('Error al cargar medicamentos', err)
+  }
+}
+
+async function cargarPacientesConMedicamentos() {
+  try {
+    const resPac = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
+    const lista = resPac.data
+
+    const conMed = await Promise.all(
+      lista.map(async (p) => {
+        const medsRes = await api.get(`/medicamentos_por_rut/${p.rut}`)
+        return { ...p, medicamentos: medsRes.data }
+      }),
+    )
+
+    pacientesConMedicamentos.value = conMed
+  } catch (err) {
+    console.error('Error al cargar pacientes con medicamentos:', err)
   }
 }
 
@@ -173,7 +218,8 @@ async function guardarEdicion() {
     await api.put(`/medicamentos/${editData.value.id}`, editData.value)
     $q.notify({ type: 'positive', message: 'Medicamento actualizado' })
     editDialog.value = false
-    cargarMedicamentos()
+    await cargarMedicamentos()
+    await cargarPacientesConMedicamentos()
   } catch (err) {
     console.error('Error al actualizar', err)
     $q.notify({ type: 'negative', message: 'No se pudo actualizar' })
@@ -184,7 +230,8 @@ async function eliminarMedicamento(row) {
   try {
     await api.delete(`/medicamentos/${row.id}`)
     $q.notify({ type: 'positive', message: 'Medicamento eliminado' })
-    cargarMedicamentos()
+    await cargarMedicamentos()
+    await cargarPacientesConMedicamentos()
   } catch (err) {
     console.error('Error al eliminar', err)
     $q.notify({ type: 'negative', message: 'No se pudo eliminar' })
@@ -193,7 +240,6 @@ async function eliminarMedicamento(row) {
 
 const agregarMedicamento = async () => {
   loading.value = true
-
   try {
     await api.post('/medicamentos_por_rut', {
       nombre: nombre.value,
@@ -204,7 +250,9 @@ const agregarMedicamento = async () => {
     })
 
     $q.notify({ type: 'positive', message: 'Medicamento agregado satisfactoriamente' })
-    cargarMedicamentos()
+    await cargarMedicamentos()
+    await cargarPacientesConMedicamentos()
+
     nombre.value = ''
     dosis.value = ''
     dias.value = []
