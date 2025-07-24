@@ -2,7 +2,7 @@
   <q-page class="flex flex-center">
     <q-card style="width: 400px">
       <q-card-section class="text-center q-pb-none">
-        <q-img :src="logoImg" alt="Logo" style="width: 200px" class="q-mx-auto q-my-md" />
+        <q-img :src="logoImg" alt="Logo" style="width: 300px" class="q-mx-auto q-my-md" />
       </q-card-section>
       <q-card-section>
         <div class="text-h6">Iniciar Sesión</div>
