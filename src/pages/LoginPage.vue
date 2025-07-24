@@ -21,6 +21,15 @@
         <q-btn label="Entrar" color="primary" @click="login" />
       </q-card-actions>
     </q-card>
+
+    <q-dialog v-model="loadingDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center q-pa-md">
+          <q-spinner color="primary" size="2em" />
+          <span class="q-ml-sm">Iniciando sesión...</span>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -37,6 +46,7 @@ const $q = useQuasar()
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
+const loadingDialog = ref(false)
 
 const validarRut = (valor: string) => {
   const rutLimpio = valor.replace(/[^0-9kK]/g, '').toLowerCase()
@@ -60,8 +70,10 @@ const validarRut = (valor: string) => {
 
 const login = async () => {
   error.value = ''
+  loadingDialog.value = true
   if (!validarRut(rut.value)) {
     error.value = 'RUT inválido'
+    loadingDialog.value = false
     return
   }
   try {
@@ -76,6 +88,7 @@ const login = async () => {
 
     if (!res.ok) {
       error.value = data.error || 'Error al iniciar sesión'
+      loadingDialog.value = false
       return
     }
 
@@ -87,19 +100,28 @@ const login = async () => {
     })
 
     const rol = data.rol?.toLowerCase().trim()
+    let destino = ''
 
     if (rol === 'cuidador') {
-      router.push('/cuidador')
+      destino = '/cuidador'
     } else if (rol === 'paciente') {
-      router.push('/paciente')
+      destino = '/paciente'
     } else if (rol === 'admin') {
-      router.push('/admin')
+      destino = '/admin'
     } else {
       error.value = 'Rol no reconocido'
+      loadingDialog.value = false
+      return
     }
+
+    setTimeout(() => {
+      loadingDialog.value = false
+      router.push(destino)
+    }, 3000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
     error.value = 'No se pudo conectar al servidor'
+    loadingDialog.value = false
   }
 }
 
