@@ -29,6 +29,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { api } from 'boot/axios'
 
 const router = useRouter()
 const nombre = ref('')
@@ -43,29 +44,23 @@ const registrar = async () => {
   error.value = ''
   success.value = ''
   try {
-    const res = await fetch('https://medialert-backend-1q8e.onrender.com/registro', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nombre: nombre.value,
-        telefono: telefono.value,
-        rut: rut.value,
-        contrasena: contrasena.value,
-        rol: rol.value,
-      }),
+    const { data } = await api.post('/registro', {
+      nombre: nombre.value,
+      telefono: telefono.value,
+      rut: rut.value,
+      contrasena: contrasena.value,
+      rol: rol.value,
     })
 
-    const data = await res.json()
-
-    if (!res.ok) {
-      error.value = data.error || 'Error al registrar'
-    } else {
-      success.value = 'Registro exitoso'
-      setTimeout(() => router.push('/login'), 1000)
-    }
+    success.value = 'Registro exitoso'
+    setTimeout(() => router.push('/login'), 1000)
   } catch (err) {
     console.error(err)
-    error.value = 'No se pudo conectar al servidor'
+    if (err.response) {
+      error.value = err.response.data?.error || 'Error al registrar'
+    } else {
+      error.value = 'No se pudo conectar al servidor'
+    }
   }
 }
 </script>
