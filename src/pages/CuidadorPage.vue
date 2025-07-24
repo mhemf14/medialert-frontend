@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-md">
+    <!-- Formulario de asignación -->
     <q-card>
       <q-card-section>
         <div class="text-h6">Asignar Medicamento a Paciente</div>
@@ -7,7 +8,7 @@
 
       <q-form @submit.prevent="agregarMedicamento">
         <q-card-section class="q-gutter-md">
-          <!-- DEBUG: muestra el array de pacientes -->
+          <!-- DEBUG: mostrar qué trae pacientes -->
           <p class="text-caption">DEBUG pacientes: {{ JSON.stringify(pacientes) }}</p>
 
           <q-select
@@ -17,20 +18,20 @@
             option-value="rut"
             label="Paciente"
             filled
-            :rules="[(val) => !!val || 'Campo obligatorio']"
+            :rules="[(v) => !!v || 'Campo obligatorio']"
           />
 
           <q-input
             v-model="nombre"
             label="Nombre del medicamento"
             filled
-            :rules="[(val) => !!val || 'Campo obligatorio']"
+            :rules="[(v) => !!v || 'Campo obligatorio']"
           />
           <q-input
             v-model="dosis"
             label="Dosis"
             filled
-            :rules="[(val) => !!val || 'Campo obligatorio']"
+            :rules="[(v) => !!v || 'Campo obligatorio']"
           />
 
           <div>
@@ -62,11 +63,11 @@
       </q-form>
     </q-card>
 
+    <!-- Tabla de medicamentos del paciente seleccionado -->
     <q-card class="q-mt-md" v-if="medicamentos.length">
       <q-card-section class="bg-primary text-white">
         <div class="text-h6">Medicamentos del Paciente</div>
       </q-card-section>
-
       <q-card-section>
         <q-table :rows="medicamentos" :columns="columns" row-key="id" flat bordered>
           <template #body-cell-acciones="{ row }">
@@ -77,6 +78,7 @@
       </q-card-section>
     </q-card>
 
+    <!-- Dialogo de edición -->
     <q-dialog v-model="editDialog">
       <q-card style="min-width: 300px">
         <q-card-section class="text-h6">Editar Medicamento</q-card-section>
@@ -93,6 +95,7 @@
       </q-card>
     </q-dialog>
 
+    <!-- Sección pacientes con sus medicamentos -->
     <q-card class="q-mt-md" v-if="pacientesConMedicamentos.length">
       <q-card-section class="bg-secondary text-white">
         <div class="text-h6">Pacientes con Medicamentos Asignados</div>
@@ -145,7 +148,7 @@ import { saveAs } from 'file-saver'
 
 const $q = useQuasar()
 
-// Form fields
+// Campos del form
 const nombre = ref('')
 const dosis = ref('')
 const rutPaciente = ref('')
@@ -164,6 +167,7 @@ const editDialog = ref(false)
 const editData = ref({ id: null, nombre: '', dosis: '', dias: '', horas: '' })
 const pacientesConMedicamentos = ref([])
 
+// Columnas de la tabla
 const columns = [
   { name: 'nombre', label: 'Medicamento', field: 'nombre', sortable: true },
   { name: 'dosis', label: 'Dosis', field: 'dosis', sortable: true },
@@ -183,51 +187,48 @@ const diasSemana = [
 ]
 
 onMounted(async () => {
-  console.log('🚀 CuidadorPage montado; rut de usuario =', usuario.rut)
+  console.log('🚀 CuidadorPage montado; rut=', usuario.rut)
 
   try {
-    // 1) Carga pacientes a cargo
-    const res = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
-    console.log('🤖 GET /pacientes_por_cuidador →', res.data)
-    pacientes.value = res.data
+    // 1) traer pacientes a cargo
+    const r1 = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
+    console.log('🤖 GET pacientes_por_cuidador →', r1.data)
+    pacientes.value = r1.data
 
-    // 2) Para cada paciente, carga sus medicamentos
+    // 2) para cada paciente, traer sus medicamentos
     pacientesConMedicamentos.value = []
-    for (const pac of pacientes.value) {
-      const medsRes = await api.get(`/medicamentos_por_rut/${pac.rut}`)
+    for (const p of pacientes.value) {
+      const r2 = await api.get(`/medicamentos_por_rut/${p.rut}`)
       pacientesConMedicamentos.value.push({
-        ...pac,
-        medicamentos: medsRes.data,
+        ...p,
+        medicamentos: r2.data,
       })
     }
   } catch (err) {
-    console.error('❌ Error al cargar pacientes o medicamentos', err)
+    console.error('❌ Error al inicializar cuidador page', err)
   }
 })
 
+// recarga la tabla cuando cambia el select
 watch(rutPaciente, async () => {
   if (!rutPaciente.value) {
     medicamentos.value = []
     return
   }
   try {
-    const res = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
-    medicamentos.value = res.data
-  } catch (err) {
-    console.error('Error al cargar medicamentos', err)
+    const r = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
+    medicamentos.value = r.data
+  } catch (e) {
+    console.error('Error cargarMedicamentos()', e)
   }
 })
 
-function agregarHora(hora) {
-  if (!horas.value.includes(hora)) {
-    horas.value.push(hora)
-  }
+function agregarHora(h) {
+  if (!horas.value.includes(h)) horas.value.push(h)
 }
-
-function eliminarHora(idx) {
-  horas.value.splice(idx, 1)
+function eliminarHora(i) {
+  horas.value.splice(i, 1)
 }
-
 function abrirEditar(row) {
   editData.value = { ...row }
   editDialog.value = true
@@ -238,11 +239,11 @@ async function guardarEdicion() {
     await api.put(`/medicamentos/${editData.value.id}`, editData.value)
     $q.notify({ type: 'positive', message: 'Medicamento actualizado' })
     editDialog.value = false
-    // recarga la tabla
-    const res = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
-    medicamentos.value = res.data
-  } catch (err) {
-    console.error('Error al actualizar', err)
+    // recarga
+    const r = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
+    medicamentos.value = r.data
+  } catch (e) {
+    console.error(e)
     $q.notify({ type: 'negative', message: 'No se pudo actualizar' })
   }
 }
@@ -251,10 +252,10 @@ async function eliminarMedicamento(row) {
   try {
     await api.delete(`/medicamentos/${row.id}`)
     $q.notify({ type: 'positive', message: 'Medicamento eliminado' })
-    const res = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
-    medicamentos.value = res.data
-  } catch (err) {
-    console.error('Error al eliminar', err)
+    const r = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
+    medicamentos.value = r.data
+  } catch (e) {
+    console.error(e)
     $q.notify({ type: 'negative', message: 'No se pudo eliminar' })
   }
 }
@@ -263,23 +264,24 @@ const agregarMedicamento = async () => {
   loading.value = true
   try {
     await api.post('/medicamentos_por_rut', {
-      nombre: nombre.value,
-      dosis: dosis.value,
-      dias: dias.value,
-      horas: horas.value,
+      nombre,
+      dosis,
+      dias,
+      horas,
       rut_paciente: rutPaciente.value,
     })
     $q.notify({ type: 'positive', message: 'Medicamento agregado' })
-    // recarga la tabla y limpia formulario (pero conserva rutPaciente)
-    const res = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
-    medicamentos.value = res.data
+    // recarga tabla
+    const r = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
+    medicamentos.value = r.data
+    // reset form (menos rutPaciente)
     nombre.value = ''
     dosis.value = ''
     dias.value = []
     horas.value = []
     horaTemporal.value = ''
-  } catch (err) {
-    console.error('Error al agregar', err)
+  } catch (e) {
+    console.error(e)
     $q.notify({ type: 'negative', message: 'No se pudo conectar al servidor' })
   } finally {
     loading.value = false
@@ -290,12 +292,8 @@ function exportarPDF(pac) {
   const doc = new jsPDF()
   doc.text(`Medicamentos de ${pac.nombre} (${pac.rut})`, 10, 10)
   const rows = pac.medicamentos.map((m) => [m.nombre, m.dosis, m.dias, m.horas])
-  autoTable(doc, {
-    head: [['Medicamento', 'Dosis', 'Días', 'Horas']],
-    body: rows,
-    startY: 20,
-  })
-  doc.save(`medicamentos_${pac.rut}.pdf`)
+  autoTable(doc, { head: [['Medicamento', 'Dosis', 'Días', 'Horas']], body: rows, startY: 20 })
+  doc.save(`meds_${pac.rut}.pdf`)
 }
 
 function exportarExcel(pac) {
@@ -303,6 +301,6 @@ function exportarExcel(pac) {
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Medicamentos')
   const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-  saveAs(new Blob([buf]), `medicamentos_${pac.rut}.xlsx`)
+  saveAs(new Blob([buf]), `meds_${pac.rut}.xlsx`)
 }
 </script>
