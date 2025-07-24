@@ -135,15 +135,15 @@ type Medicamento = {
   horas: string
 }
 
+type PacienteConMedicamento = Paciente & { medicamentos: Medicamento[] }
+
 const $q = useQuasar()
 const usuario = JSON.parse(
   localStorage.getItem('usuario') || '{}'
 ) as { rut: string }
 
 const pacientes = ref<Paciente[]>([])
-const pacientesConMedicamentos = ref<
-  (Paciente & { medicamentos: Medicamento[] })[]
->([])
+const pacientesConMedicamentos = ref<PacienteConMedicamento[]>([])
 const rutPaciente = ref<string>('')
 const nombre = ref<string>('')
 const dosis = ref<string>('')
