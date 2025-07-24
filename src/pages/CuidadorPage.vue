@@ -48,8 +48,9 @@
                 text-color="white"
                 removable
                 @remove="eliminarHora(i)"
-                >{{ h }}</q-chip
               >
+                {{ h }}
+              </q-chip>
             </div>
           </div>
         </q-card-section>
@@ -60,7 +61,7 @@
       </q-form>
     </q-card>
 
-    <!-- Medicamentos individuales -->
+    <!-- Medicamentos del paciente seleccionado -->
     <q-card class="q-mt-md" v-if="medicamentos.length">
       <q-card-section class="bg-primary text-white">
         <div class="text-h6">Medicamentos del Paciente</div>
@@ -92,7 +93,7 @@
       </q-card>
     </q-dialog>
 
-    <!-- Todos los pacientes con sus listas -->
+    <!-- Lista completa de pacientes con sus medicamentos -->
     <q-card class="q-mt-md" v-if="pacientesConMedicamentos.length">
       <q-card-section class="bg-secondary text-white">
         <div class="text-h6">Pacientes con Medicamentos Asignados</div>
@@ -163,15 +164,21 @@ const diasSemana = [
 ]
 
 const editDialog = ref(false)
-const editData = ref<Medicamento>({ id: 0, nombre: '', dosis: '', dias: '', horas: '' })
+const editData = ref<Medicamento>({
+  id: 0,
+  nombre: '',
+  dosis: '',
+  dias: '',
+  horas: '',
+})
 
-// al montar: traigo pacientes + sus meds
+// 1) Carga inicial de pacientes y sus medicamentos
 onMounted(async () => {
   try {
     const { data: pacs } = await api.get<Paciente[]>(`/pacientes_por_cuidador/${usuario.rut}`)
     pacientes.value = pacs
-
     pacientesConMedicamentos.value = []
+
     for (const p of pacs) {
       const { data: meds } = await api.get<Medicamento[]>(`/medicamentos_por_rut/${p.rut}`)
       pacientesConMedicamentos.value.push({ ...p, medicamentos: meds })
@@ -182,10 +189,11 @@ onMounted(async () => {
   }
 })
 
-// cuando el select cambie, refresco solo esa tabla
+// 2) Al cambiar paciente, refresca solo esa tabla
 watch(rutPaciente, async (newRut) => {
   medicamentos.value = []
   if (!newRut) return
+
   try {
     const { data } = await api.get<Medicamento[]>(`/medicamentos_por_rut/${newRut}`)
     medicamentos.value = data
@@ -210,9 +218,11 @@ function abrirEditar(m: Medicamento) {
 async function guardarEdicion() {
   try {
     await api.put(`/medicamentos/${editData.value.id}`, editData.value)
-    $q.notify({ type: 'positive', message: 'Guardado' })
+    $q.notify({ type: 'positive', message: 'Guardado exitoso' })
     editDialog.value = false
-    if (rutPaciente.value) await watch(rutPaciente).callback(rutPaciente.value)
+    if (rutPaciente.value) {
+      await watch(rutPaciente).callback(rutPaciente.value)
+    }
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo guardar' })
   }
@@ -221,8 +231,10 @@ async function guardarEdicion() {
 async function eliminarMedicamento(m: Medicamento) {
   try {
     await api.delete(`/medicamentos/${m.id}`)
-    $q.notify({ type: 'positive', message: 'Eliminado' })
-    if (rutPaciente.value) await watch(rutPaciente).callback(rutPaciente.value)
+    $q.notify({ type: 'positive', message: 'Eliminado exitoso' })
+    if (rutPaciente.value) {
+      await watch(rutPaciente).callback(rutPaciente.value)
+    }
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo eliminar' })
   }
@@ -238,10 +250,14 @@ async function agregarMedicamento() {
       horas: horas.value,
       rut_paciente: rutPaciente.value,
     })
-    $q.notify({ type: 'positive', message: 'Agregado' })
-    if (rutPaciente.value) await watch(rutPaciente).callback(rutPaciente.value)
-    nombre.value = dosis.value = ''
-    dias.value = horas.value = []
+    $q.notify({ type: 'positive', message: 'Medicamento agregado' })
+    if (rutPaciente.value) {
+      await watch(rutPaciente).callback(rutPaciente.value)
+    }
+    nombre.value = ''
+    dosis.value = ''
+    dias.value = []
+    horas.value = []
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo agregar' })
   } finally {
