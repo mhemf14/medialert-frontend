@@ -27,11 +27,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 
 // 🔧 Configuración
 const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
 
 const router = useRouter()
+const $q = useQuasar()
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
@@ -78,6 +80,11 @@ const login = async () => {
     }
 
     localStorage.setItem('usuario', JSON.stringify(data))
+
+    $q.notify({
+      type: 'info',
+      message: 'Campaña activa: ¡recuerda revisar tus notificaciones!',
+    })
 
     const rol = data.rol?.toLowerCase().trim()
 
