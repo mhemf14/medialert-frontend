@@ -19,13 +19,15 @@
       </q-card-actions>
     </q-card>
 
-    <!-- Popup de carga -->
-    <q-dialog v-model="cargando" persistent>
-      <q-card class="row items-center q-pa-md">
-        <q-spinner class="q-mr-md" />
-        <span>Iniciando sesión...</span>
-      </q-card>
-    </q-dialog>
+    <!-- Animación vistosa -->
+    <transition name="fade">
+      <div v-if="cargando" class="fullscreen bg-black bg-opacity-75 flex flex-center z-top">
+        <div class="column items-center">
+          <q-spinner-gears size="50px" color="primary" />
+          <div class="text-white q-mt-md text-h6">Iniciando sesión...</div>
+        </div>
+      </div>
+    </transition>
   </q-page>
 </template>
 
@@ -51,8 +53,6 @@ const login = async () => {
     return
   }
 
-  cargando.value = true // Mostrar popup
-
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
@@ -63,7 +63,6 @@ const login = async () => {
     const data = await res.json()
 
     if (!res.ok) {
-      cargando.value = false
       error.value = data.error || 'Error al iniciar sesión'
       return
     }
@@ -77,19 +76,19 @@ const login = async () => {
     else if (rol === 'paciente') destino = '/paciente'
     else if (rol === 'admin') destino = '/admin'
     else {
-      cargando.value = false
       error.value = 'Rol no reconocido'
       return
     }
 
-    // Simular espera de 4 segundos y redirigir
+    // Mostrar animación vistosa
+    cargando.value = true
+
     setTimeout(() => {
       cargando.value = false
       router.push(destino)
-    }, 4000)
+    }, 3000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
-    cargando.value = false
     error.value = 'No se pudo conectar al servidor'
   }
 }
@@ -98,3 +97,14 @@ const registrarse = () => {
   router.push('/registro')
 }
 </script>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
