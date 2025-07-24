@@ -1,11 +1,8 @@
 <template>
   <q-page class="flex flex-center">
     <q-card style="width: 400px">
-      <q-card-section class="flex flex-center q-pb-none">
-        <img src="../assets/medical-logo.svg" alt="Logo médico" style="width: 80px;" />
-      </q-card-section>
-      <q-card-section class="q-pt-none">
-        <div class="text-h6 text-center">Iniciar Sesión</div>
+      <q-card-section>
+        <div class="text-h6">Iniciar Sesión</div>
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
@@ -21,57 +18,40 @@
         <q-btn label="Entrar" color="primary" @click="login" />
       </q-card-actions>
     </q-card>
+
+    <!-- Popup de carga -->
     <q-dialog v-model="cargando" persistent>
       <q-card class="row items-center q-pa-md">
         <q-spinner class="q-mr-md" />
         <span>Iniciando sesión...</span>
       </q-card>
     </q-dialog>
-
   </q-page>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 
-// 🔧 Configuración
-const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
-
-const router = useRouter()
 const $q = useQuasar()
+const router = useRouter()
+
+const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
 const cargando = ref(false)
 
-const validarRut = (valor: string) => {
-  const rutLimpio = valor.replace(/[^0-9kK]/g, '').toLowerCase()
-  if (rutLimpio.length < 2) {
-    return false
-  }
-  const cuerpo = rutLimpio.slice(0, -1)
-  const dvIngresado = rutLimpio.slice(-1)
-
-  let suma = 0
-  let factor = 2
-  for (let i = cuerpo.length - 1; i >= 0; i--) {
-    suma += parseInt(cuerpo.charAt(i)) * factor
-    factor = factor === 7 ? 2 : factor + 1
-  }
-  const dvEsperadoNum = 11 - (suma % 11)
-  const dvEsperado = dvEsperadoNum === 11 ? '0' : dvEsperadoNum === 10 ? 'k' : String(dvEsperadoNum)
-
-  return dvIngresado === dvEsperado
-}
-
 const login = async () => {
   error.value = ''
-  if (!validarRut(rut.value)) {
-    error.value = 'RUT inválido'
+
+  if (!rut.value || !contrasena.value) {
+    error.value = 'Debe ingresar su RUT y contraseña'
     return
   }
+
+  cargando.value = true // Mostrar popup
 
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
@@ -81,44 +61,37 @@ const login = async () => {
     })
 
     const data = await res.json()
-    console.log('🟢 Usuario autenticado:', data) // 👀 Verifica qué llega
 
     if (!res.ok) {
-      error.value = data.error || 'Error al iniciar sesión'
       cargando.value = false
+      error.value = data.error || 'Error al iniciar sesión'
       return
     }
 
     localStorage.setItem('usuario', JSON.stringify(data))
 
-    $q.notify({
-      type: 'info',
-      message: 'Campaña activa: ¡recuerda revisar tus notificaciones!',
-    })
-
     const rol = data.rol?.toLowerCase().trim()
     let destino = ''
 
-    if (rol === 'cuidador') {
-      destino = '/cuidador'
-    } else if (rol === 'paciente') {
-      destino = '/paciente'
-    } else if (rol === 'admin') {
-      destino = '/admin'
-    } else {
+    if (rol === 'cuidador') destino = '/cuidador'
+    else if (rol === 'paciente') destino = '/paciente'
+    else if (rol === 'admin') destino = '/admin'
+    else {
+      cargando.value = false
       error.value = 'Rol no reconocido'
       return
     }
 
-    cargando.value = true
+    // Simular espera de 4 segundos y redirigir
     setTimeout(() => {
       cargando.value = false
       router.push(destino)
-    }, 3000)
+    }, 4000)
+
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
-    error.value = 'No se pudo conectar al servidor'
     cargando.value = false
+    error.value = 'No se pudo conectar al servidor'
   }
 }
 
