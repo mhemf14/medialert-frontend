@@ -176,8 +176,12 @@ const diasSemana = [
 
 onMounted(async () => {
   try {
+    // ← Aquí agregamos el console.log para depurar
     const res = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
+    console.log('🤖 GET /pacientes_por_cuidador →', res.data)
     pacientes.value = res.data
+
+    // Cargar los medicamentos de cada paciente
     for (const pac of res.data) {
       const meds = await api.get(`/medicamentos_por_rut/${pac.rut}`)
       pacientesConMedicamentos.value.push({ ...pac, medicamentos: meds.data })
@@ -258,7 +262,7 @@ const agregarMedicamento = async () => {
     dosis.value = ''
     dias.value = []
     horas.value = []
-    rutPaciente.value = ''
+    // evita limpiar rutPaciente para mantener el select activo
     horaTemporal.value = ''
   } catch (err) {
     console.error('Error de conexión:', err)
