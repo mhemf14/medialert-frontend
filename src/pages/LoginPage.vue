@@ -73,8 +73,6 @@ const login = async () => {
     return
   }
 
-  cargando.value = true
-
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
@@ -87,7 +85,6 @@ const login = async () => {
 
     if (!res.ok) {
       error.value = data.error || 'Error al iniciar sesión'
-      cargando.value = false
       return
     }
 
@@ -109,9 +106,10 @@ const login = async () => {
       destino = '/admin'
     } else {
       error.value = 'Rol no reconocido'
-      cargando.value = false
       return
     }
+
+    cargando.value = true
 
     setTimeout(() => {
       cargando.value = false
