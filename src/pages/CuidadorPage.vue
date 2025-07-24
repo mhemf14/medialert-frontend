@@ -100,13 +100,17 @@
       </q-card-section>
       <q-card-section>
         <div v-for="pac in pacientesConMedicamentos" :key="pac.rut" class="q-mb-md">
-          <div class="text-subtitle1">{{ pac.nombre }} ({{ pac.rut }})</div>
+          <div class="text-subtitle1">
+            {{ pac.nombre }} ({{ pac.rut }})
+          </div>
           <q-list bordered separator>
             <q-item v-for="med in pac.medicamentos" :key="med.id">
               <q-item-section>
                 <q-item-label>{{ med.nombre }}</q-item-label>
                 <q-item-label caption>
-                  Dosis: {{ med.dosis }} | Días: {{ med.dias }} | Horas: {{ med.horas }}
+                  Dosis: {{ med.dosis }} |
+                  Días: {{ med.dias }} |
+                  Horas: {{ med.horas }}
                 </q-item-label>
               </q-item-section>
             </q-item>
@@ -132,10 +136,14 @@ type Medicamento = {
 }
 
 const $q = useQuasar()
-const usuario = JSON.parse(localStorage.getItem('usuario') || '{}') as { rut: string }
+const usuario = JSON.parse(
+  localStorage.getItem('usuario') || '{}'
+) as { rut: string }
 
 const pacientes = ref<Paciente[]>([])
-const pacientesConMedicamentos = ref<(Paciente & { medicamentos: Medicamento[] })[]>([])
+const pacientesConMedicamentos = ref<
+  (Paciente & { medicamentos: Medicamento[] })[]
+>([])
 const rutPaciente = ref<string>('')
 const nombre = ref<string>('')
 const dosis = ref<string>('')
@@ -150,7 +158,7 @@ const columns = [
   { name: 'dosis', label: 'Dosis', field: 'dosis', sortable: true },
   { name: 'dias', label: 'Días', field: 'dias', sortable: true },
   { name: 'horas', label: 'Horas', field: 'horas', sortable: true },
-  { name: 'acciones', label: 'Acciones', field: 'acciones' },
+  { name: 'acciones', label: 'Acciones', field: 'acciones' }
 ]
 
 const diasSemana = [
@@ -160,7 +168,7 @@ const diasSemana = [
   { label: 'Jueves', value: 'Jueves' },
   { label: 'Viernes', value: 'Viernes' },
   { label: 'Sábado', value: 'Sábado' },
-  { label: 'Domingo', value: 'Domingo' },
+  { label: 'Domingo', value: 'Domingo' }
 ]
 
 const editDialog = ref(false)
@@ -169,18 +177,22 @@ const editData = ref<Medicamento>({
   nombre: '',
   dosis: '',
   dias: '',
-  horas: '',
+  horas: ''
 })
 
 // 1) Carga inicial de pacientes y sus medicamentos
 onMounted(async () => {
   try {
-    const { data: pacs } = await api.get<Paciente[]>(`/pacientes_por_cuidador/${usuario.rut}`)
+    const { data: pacs } = await api.get<Paciente[]>(
+      `/pacientes_por_cuidador/${usuario.rut}`
+    )
     pacientes.value = pacs
     pacientesConMedicamentos.value = []
 
     for (const p of pacs) {
-      const { data: meds } = await api.get<Medicamento[]>(`/medicamentos_por_rut/${p.rut}`)
+      const { data: meds } = await api.get<Medicamento[]>(
+        `/medicamentos_por_rut/${p.rut}`
+      )
       pacientesConMedicamentos.value.push({ ...p, medicamentos: meds })
     }
   } catch (err) {
@@ -195,7 +207,9 @@ watch(rutPaciente, async (newRut) => {
   if (!newRut) return
 
   try {
-    const { data } = await api.get<Medicamento[]>(`/medicamentos_por_rut/${newRut}`)
+    const { data } = await api.get<Medicamento[]>(
+      `/medicamentos_por_rut/${newRut}`
+    )
     medicamentos.value = data
   } catch (err) {
     console.error(err)
@@ -248,7 +262,7 @@ async function agregarMedicamento() {
       dosis: dosis.value,
       dias: dias.value,
       horas: horas.value,
-      rut_paciente: rutPaciente.value,
+      rut_paciente: rutPaciente.value
     })
     $q.notify({ type: 'positive', message: 'Medicamento agregado' })
     if (rutPaciente.value) {
