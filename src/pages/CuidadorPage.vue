@@ -97,8 +97,35 @@
         <q-card-section class="q-gutter-md">
           <q-input v-model="editData.nombre" label="Nombre" />
           <q-input v-model="editData.dosis" label="Dosis" />
-          <q-input v-model="editData.dias" label="Días" />
-          <q-input v-model="editData.horas" label="Horas" />
+          <div>
+            <div class="text-subtitle2">Días:</div>
+            <q-option-group
+              type="checkbox"
+              :options="diasSemana"
+              v-model="editDias"
+              inline
+            />
+          </div>
+          <div>
+            <div class="text-subtitle2">Horas:</div>
+            <q-time
+              v-model="editHoraTemporal"
+              format24h
+              @update:model-value="agregaHoraEdicion"
+            />
+            <div class="q-mt-sm">
+              <q-chip
+                v-for="(h, i) in editHoras"
+                :key="i"
+                color="primary"
+                text-color="white"
+                removable
+                @remove="eliminarHoraEdicion(i)"
+              >
+                {{ h }}
+              </q-chip>
+            </div>
+          </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancelar" v-close-popup />
@@ -177,6 +204,9 @@ const editData = ref({
   dias: '',
   horas: '',
 })
+const editDias = ref([])
+const editHoras = ref([])
+const editHoraTemporal = ref('')
 
 const pacienteActual = computed(() => pacientes.value.find((p) => p.rut === rutPaciente.value))
 
@@ -223,14 +253,28 @@ function eliminarHora(i) {
   horas.value.splice(i, 1)
 }
 
+function agregaHoraEdicion(h) {
+  if (!editHoras.value.includes(h)) editHoras.value.push(h)
+}
+function eliminarHoraEdicion(i) {
+  editHoras.value.splice(i, 1)
+}
+
 function abrirEditar(m) {
   editData.value = { ...m }
+  editDias.value = m.dias ? m.dias.split(',').map((d) => d.trim()) : []
+  editHoras.value = m.horas ? m.horas.split(',').map((h) => h.trim()) : []
+  editHoraTemporal.value = ''
   editDialog.value = true
 }
 
 async function guardarEdicion() {
   try {
-    await api.put(`/medicamentos/${editData.value.id}`, editData.value)
+    await api.put(`/medicamentos/${editData.value.id}`, {
+      ...editData.value,
+      dias: editDias.value,
+      horas: editHoras.value,
+    })
     $q.notify({ type: 'positive', message: 'Guardado exitoso' })
     editDialog.value = false
     await cargarMedicamentos(rutPaciente.value)
