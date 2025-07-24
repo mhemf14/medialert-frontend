@@ -1,1 +1,23 @@
 // app global css in SCSS form
+body {
+  font-size: 18px;
+}
+
+body.high-contrast {
+  background-color: #000;
+  color: #fff;
+}
+
+body.high-contrast a,
+body.high-contrast .text-primary {
+  color: #fff !important;
+}
+
+body.high-contrast .bg-primary {
+  background-color: #000 !important;
+}
+
+body.high-contrast .q-card {
+  background-color: #000;
+  color: #fff;
+}

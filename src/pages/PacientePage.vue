@@ -6,6 +6,13 @@
       </q-card-section>
       <q-card-section>
         <div class="text-subtitle1">Hora actual: {{ horaActual }}</div>
+        <q-btn
+          class="q-ml-sm"
+          color="primary"
+          flat
+          label="Alto Contraste"
+          @click="toggleContraste"
+        />
       </q-card-section>
     </q-card>
 
@@ -42,6 +49,17 @@ const medicamentos = ref([])
 const horaActual = ref('')
 const $q = useQuasar()
 const usuario = JSON.parse(localStorage.getItem('usuario'))
+
+const modoContraste = ref(false)
+
+function toggleContraste() {
+  modoContraste.value = !modoContraste.value
+  if (modoContraste.value) {
+    document.body.classList.add('high-contrast')
+  } else {
+    document.body.classList.remove('high-contrast')
+  }
+}
 
 function traducirDia(diaIngles) {
   const mapa = {
@@ -105,6 +123,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   clearInterval(timer)
+  document.body.classList.remove('high-contrast')
 })
 </script>
 
