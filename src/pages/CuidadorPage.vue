@@ -1,6 +1,5 @@
 <template>
   <q-page class="q-pa-md">
-    <!-- FORMULARIO -->
     <q-card>
       <q-card-section>
         <div class="text-h6">Asignar Medicamento a Paciente</div>
@@ -58,7 +57,6 @@
       </q-form>
     </q-card>
 
-    <!-- MEDICAMENTOS DEL PACIENTE SELECCIONADO -->
     <q-card class="q-mt-md" v-if="medicamentos.length">
       <q-card-section class="bg-primary text-white">
         <div class="text-h6">Medicamentos del Paciente</div>
@@ -74,7 +72,6 @@
       </q-card-section>
     </q-card>
 
-    <!-- DIALOGO EDICION -->
     <q-dialog v-model="editDialog">
       <q-card style="min-width: 300px">
         <q-card-section class="text-h6">Editar Medicamento</q-card-section>
@@ -91,7 +88,6 @@
       </q-card>
     </q-dialog>
 
-    <!-- TODOS LOS PACIENTES ASIGNADOS CON SUS MEDICAMENTOS -->
     <q-card class="q-mt-md" v-if="pacientesConMedicamentos.length">
       <q-card-section class="bg-secondary text-white">
         <div class="text-h6">Pacientes con Medicamentos Asignados</div>
@@ -100,6 +96,24 @@
       <q-card-section>
         <div v-for="pac in pacientesConMedicamentos" :key="pac.rut" class="q-mb-md">
           <div class="text-subtitle1">{{ pac.nombre }} ({{ pac.rut }})</div>
+
+          <q-btn
+            dense
+            icon="picture_as_pdf"
+            color="red"
+            class="q-mr-sm q-mb-sm"
+            label="Exportar PDF"
+            @click="exportarPDF(pac)"
+          />
+          <q-btn
+            dense
+            icon="table_view"
+            color="green"
+            class="q-mb-sm"
+            label="Exportar Excel"
+            @click="exportarExcel(pac)"
+          />
+
           <q-list bordered separator>
             <q-item v-for="med in pac.medicamentos" :key="med.id">
               <q-item-section>
@@ -120,8 +134,13 @@
 import { ref, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
 
 const $q = useQuasar()
+
 const nombre = ref('')
 const dosis = ref('')
 const rutPaciente = ref('')
@@ -159,7 +178,10 @@ onMounted(async () => {
   try {
     const res = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
     pacientes.value = res.data
-    await cargarPacientesConMedicamentos()
+    for (const pac of res.data) {
+      const meds = await api.get(`/medicamentos_por_rut/${pac.rut}`)
+      pacientesConMedicamentos.value.push({ ...pac, medicamentos: meds.data })
+    }
   } catch (err) {
     console.error('Error al cargar pacientes', err)
   }
@@ -177,24 +199,6 @@ async function cargarMedicamentos() {
     medicamentos.value = res.data
   } catch (err) {
     console.error('Error al cargar medicamentos', err)
-  }
-}
-
-async function cargarPacientesConMedicamentos() {
-  try {
-    const resPac = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
-    const lista = resPac.data
-
-    const conMed = await Promise.all(
-      lista.map(async (p) => {
-        const medsRes = await api.get(`/medicamentos_por_rut/${p.rut}`)
-        return { ...p, medicamentos: medsRes.data }
-      }),
-    )
-
-    pacientesConMedicamentos.value = conMed
-  } catch (err) {
-    console.error('Error al cargar pacientes con medicamentos:', err)
   }
 }
 
@@ -218,8 +222,7 @@ async function guardarEdicion() {
     await api.put(`/medicamentos/${editData.value.id}`, editData.value)
     $q.notify({ type: 'positive', message: 'Medicamento actualizado' })
     editDialog.value = false
-    await cargarMedicamentos()
-    await cargarPacientesConMedicamentos()
+    cargarMedicamentos()
   } catch (err) {
     console.error('Error al actualizar', err)
     $q.notify({ type: 'negative', message: 'No se pudo actualizar' })
@@ -230,8 +233,7 @@ async function eliminarMedicamento(row) {
   try {
     await api.delete(`/medicamentos/${row.id}`)
     $q.notify({ type: 'positive', message: 'Medicamento eliminado' })
-    await cargarMedicamentos()
-    await cargarPacientesConMedicamentos()
+    cargarMedicamentos()
   } catch (err) {
     console.error('Error al eliminar', err)
     $q.notify({ type: 'negative', message: 'No se pudo eliminar' })
@@ -240,6 +242,7 @@ async function eliminarMedicamento(row) {
 
 const agregarMedicamento = async () => {
   loading.value = true
+
   try {
     await api.post('/medicamentos_por_rut', {
       nombre: nombre.value,
@@ -250,9 +253,7 @@ const agregarMedicamento = async () => {
     })
 
     $q.notify({ type: 'positive', message: 'Medicamento agregado satisfactoriamente' })
-    await cargarMedicamentos()
-    await cargarPacientesConMedicamentos()
-
+    cargarMedicamentos()
     nombre.value = ''
     dosis.value = ''
     dias.value = []
@@ -268,5 +269,30 @@ const agregarMedicamento = async () => {
   } finally {
     loading.value = false
   }
+}
+
+function exportarPDF(paciente) {
+  const doc = new jsPDF()
+  doc.text(`Medicamentos de ${paciente.nombre} (${paciente.rut})`, 10, 10)
+
+  const rows = paciente.medicamentos.map((m) => [m.nombre, m.dosis, m.dias, m.horas])
+
+  autoTable(doc, {
+    head: [['Medicamento', 'Dosis', 'Días', 'Horas']],
+    body: rows,
+    startY: 20,
+  })
+
+  doc.save(`medicamentos_${paciente.rut}.pdf`)
+}
+
+function exportarExcel(paciente) {
+  const worksheet = XLSX.utils.json_to_sheet(paciente.medicamentos)
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Medicamentos')
+
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+  const blob = new Blob([excelBuffer], { type: 'application/octet-stream' })
+  saveAs(blob, `medicamentos_${paciente.rut}.xlsx`)
 }
 </script>
