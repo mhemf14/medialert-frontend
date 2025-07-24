@@ -15,21 +15,21 @@
             option-value="rut"
             label="Paciente"
             filled
-            :rules="[(v: string) => !!v || 'Selecciona un paciente']"
+            :rules="[(v) => !!v || 'Selecciona un paciente']"
           />
 
           <q-input
             v-model="nombre"
             label="Nombre del medicamento"
             filled
-            :rules="[(v: string) => !!v || 'Campo obligatorio']"
+            :rules="[(v) => !!v || 'Campo obligatorio']"
           />
 
           <q-input
             v-model="dosis"
             label="Dosis"
             filled
-            :rules="[(v: string) => !!v || 'Campo obligatorio']"
+            :rules="[(v) => !!v || 'Campo obligatorio']"
           />
 
           <div>
@@ -121,39 +121,28 @@
   </q-page>
 </template>
 
-<script setup lang="ts">
+<script setup>
 /* eslint-disable */
 import { ref, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
-type Paciente = { rut: string; nombre: string }
-type Medicamento = {
-  id: number
-  nombre: string
-  dosis: string
-  dias: string
-  horas: string
-}
-
-type PacienteConMedicamento = Paciente & { medicamentos: Medicamento[] }
-
 const $q = useQuasar()
 const usuario = JSON.parse(
   localStorage.getItem('usuario') || '{}'
-) as { rut: string }
+)
 
-const pacientes = ref([] as Paciente[])
-const pacientesConMedicamentos = ref([] as PacienteConMedicamento[])
-const rutPaciente = ref<string>('')
-const nombre = ref<string>('')
-const dosis = ref<string>('')
-const dias = ref<string[]>([])
-const horas = ref<string[]>([])
-const horaTemporal = ref<string>('')
-const loading = ref<boolean>(false)
+const pacientes = ref([])
+const pacientesConMedicamentos = ref([])
+const rutPaciente = ref('')
+const nombre = ref('')
+const dosis = ref('')
+const dias = ref([])
+const horas = ref([])
+const horaTemporal = ref('')
+const loading = ref(false)
 
-const medicamentos = ref<Medicamento[]>([])
+const medicamentos = ref([])
 const columns = [
   { name: 'nombre', label: 'Medicamento', field: 'nombre', sortable: true },
   { name: 'dosis', label: 'Dosis', field: 'dosis', sortable: true },
@@ -173,7 +162,7 @@ const diasSemana = [
 ]
 
 const editDialog = ref(false)
-const editData = ref<Medicamento>({
+const editData = ref({
   id: 0,
   nombre: '',
   dosis: '',
@@ -184,14 +173,14 @@ const editData = ref<Medicamento>({
 // 1) Carga inicial de pacientes y sus medicamentos
 onMounted(async () => {
   try {
-    const { data: pacs } = await api.get<Paciente[]>(
+    const { data: pacs } = await api.get(
       `/pacientes_por_cuidador/${usuario.rut}`
     )
     pacientes.value = pacs
     pacientesConMedicamentos.value = []
 
     for (const p of pacs) {
-      const { data: meds } = await api.get<Medicamento[]>(
+      const { data: meds } = await api.get(
         `/medicamentos_por_rut/${p.rut}`
       )
       pacientesConMedicamentos.value.push({ ...p, medicamentos: meds })
@@ -208,7 +197,7 @@ watch(rutPaciente, async (newRut) => {
   if (!newRut) return
 
   try {
-    const { data } = await api.get<Medicamento[]>(
+    const { data } = await api.get(
       `/medicamentos_por_rut/${newRut}`
     )
     medicamentos.value = data
@@ -218,14 +207,14 @@ watch(rutPaciente, async (newRut) => {
   }
 })
 
-function agregarHora(h: string) {
+function agregarHora(h) {
   if (!horas.value.includes(h)) horas.value.push(h)
 }
-function eliminarHora(i: number) {
+function eliminarHora(i) {
   horas.value.splice(i, 1)
 }
 
-function abrirEditar(m: Medicamento) {
+function abrirEditar(m) {
   editData.value = { ...m }
   editDialog.value = true
 }
@@ -243,7 +232,7 @@ async function guardarEdicion() {
   }
 }
 
-async function eliminarMedicamento(m: Medicamento) {
+async function eliminarMedicamento(m) {
   try {
     await api.delete(`/medicamentos/${m.id}`)
     $q.notify({ type: 'positive', message: 'Eliminado exitoso' })
