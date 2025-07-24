@@ -67,13 +67,6 @@ const login = async () => {
     return
   }
 
-  loginDialog = $q.dialog({
-    progress: true,
-    message: 'Iniciando sesión...',
-    ok: false,
-    persistent: true,
-  })
-
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
@@ -108,9 +101,15 @@ const login = async () => {
       destino = '/admin'
     } else {
       error.value = 'Rol no reconocido'
-      loginDialog?.hide()
       return
     }
+
+    loginDialog = $q.dialog({
+      progress: true,
+      message: 'Iniciando sesión...',
+      ok: false,
+      persistent: true,
+    })
 
     setTimeout(() => {
       loginDialog?.hide()
