@@ -287,7 +287,8 @@ function abrirEditar(m) {
 async function guardarEdicion() {
   try {
     await api.put(`/medicamentos/${editData.value.id}`, {
-      ...editData.value,
+      nombre: editData.value.nombre,
+      dosis: editData.value.dosis,
       dias: editDias.value,
       horas: editHoras.value,
     })
@@ -300,9 +301,9 @@ async function guardarEdicion() {
   }
 }
 
-async function eliminarMedicamento(m) {
+async function eliminarMedicamento(row) {
   try {
-    await api.delete(`/medicamentos/${m.id}`)
+    await api.delete(`/medicamentos/${row.id}`)
     $q.notify({ type: 'positive', message: 'Eliminado exitoso' })
     await cargarMedicamentos(rutPaciente.value)
     await cargarPacientesConMedicamentos()
