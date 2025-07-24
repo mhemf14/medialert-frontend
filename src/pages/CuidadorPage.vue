@@ -150,6 +150,22 @@
                   Dosis: {{ med.dosis }} | Días: {{ med.dias }} | Horas: {{ med.horas }}
                 </q-item-label>
               </q-item-section>
+              <q-item-section side>
+                <q-btn
+                  flat
+                  round
+                  icon="edit"
+                  color="primary"
+                  @click="abrirEditar(med)"
+                />
+                <q-btn
+                  flat
+                  round
+                  icon="delete"
+                  color="negative"
+                  @click="eliminarMedicamento(med)"
+                />
+              </q-item-section>
             </q-item>
           </q-list>
         </div>
