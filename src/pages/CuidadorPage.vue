@@ -1,5 +1,8 @@
 <template>
   <q-page class="q-pa-md">
+    <q-banner v-if="mensajeExito" class="bg-green-2 text-black q-mb-md">
+      Medicamento agregado satisfactoriamente
+    </q-banner>
     <q-card>
       <q-card-section>
         <div class="text-h6">Asignar Medicamento a Paciente</div>
@@ -104,6 +107,7 @@ const dias = ref([])
 const horas = ref([])
 const horaTemporal = ref('')
 const loading = ref(false)
+const mensajeExito = ref(false)
 
 const usuario = JSON.parse(localStorage.getItem('usuario')) || {}
 const pacientes = ref([])
@@ -204,6 +208,10 @@ const agregarMedicamento = async () => {
     })
 
     $q.notify({ type: 'positive', message: 'Medicamento agregado satisfactoriamente' })
+    mensajeExito.value = true
+    setTimeout(() => {
+      mensajeExito.value = false
+    }, 3000)
     cargarMedicamentos()
     nombre.value = ''
     dosis.value = ''
