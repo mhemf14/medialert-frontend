@@ -18,6 +18,14 @@
         <q-btn label="Entrar" color="primary" @click="login" />
       </q-card-actions>
     </q-card>
+
+    <!-- Popup de carga -->
+    <q-dialog v-model="cargando" persistent>
+      <q-card class="row items-center q-pa-md">
+        <q-spinner class="q-mr-md" />
+        <span>Iniciando sesión...</span>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -33,6 +41,7 @@ const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
+const cargando = ref(false)
 
 const login = async () => {
   error.value = ''
@@ -42,12 +51,9 @@ const login = async () => {
     return
   }
 
-  try {
-    $q.loading.show({
-      message: 'Ingresando...',
-      spinnerColor: 'primary',
-    })
+  cargando.value = true // Mostrar popup
 
+  try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -57,7 +63,7 @@ const login = async () => {
     const data = await res.json()
 
     if (!res.ok) {
-      $q.loading.hide()
+      cargando.value = false
       error.value = data.error || 'Error al iniciar sesión'
       return
     }
@@ -71,19 +77,20 @@ const login = async () => {
     else if (rol === 'paciente') destino = '/paciente'
     else if (rol === 'admin') destino = '/admin'
     else {
-      $q.loading.hide()
+      cargando.value = false
       error.value = 'Rol no reconocido'
       return
     }
 
-    // Esperar 4 segundos antes de redirigir
+    // Simular espera de 4 segundos y redirigir
     setTimeout(() => {
-      $q.loading.hide()
+      cargando.value = false
       router.push(destino)
     }, 4000)
+
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
-    $q.loading.hide()
+    cargando.value = false
     error.value = 'No se pudo conectar al servidor'
   }
 }
