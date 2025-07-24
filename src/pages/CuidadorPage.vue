@@ -61,6 +61,20 @@
       </q-form>
     </q-card>
 
+    <!-- Información del paciente seleccionado -->
+    <q-card class="q-mt-md" v-if="pacienteActual">
+      <q-card-section class="bg-grey-3">
+        <div class="text-h6">Datos del Paciente</div>
+      </q-card-section>
+      <q-card-section>
+        <div><strong>Nombre:</strong> {{ pacienteActual.nombre }}</div>
+        <div><strong>RUT:</strong> {{ pacienteActual.rut }}</div>
+        <div v-if="pacienteActual.telefono">
+          <strong>Teléfono:</strong> {{ pacienteActual.telefono }}
+        </div>
+      </q-card-section>
+    </q-card>
+
     <!-- Medicamentos del paciente seleccionado -->
     <q-card class="q-mt-md" v-if="medicamentos.length">
       <q-card-section class="bg-primary text-white">
@@ -100,17 +114,13 @@
       </q-card-section>
       <q-card-section>
         <div v-for="pac in pacientesConMedicamentos" :key="pac.rut" class="q-mb-md">
-          <div class="text-subtitle1">
-            {{ pac.nombre }} ({{ pac.rut }})
-          </div>
+          <div class="text-subtitle1">{{ pac.nombre }} ({{ pac.rut }})</div>
           <q-list bordered separator>
             <q-item v-for="med in pac.medicamentos" :key="med.id">
               <q-item-section>
                 <q-item-label>{{ med.nombre }}</q-item-label>
                 <q-item-label caption>
-                  Dosis: {{ med.dosis }} |
-                  Días: {{ med.dias }} |
-                  Horas: {{ med.horas }}
+                  Dosis: {{ med.dosis }} | Días: {{ med.dias }} | Horas: {{ med.horas }}
                 </q-item-label>
               </q-item-section>
             </q-item>
@@ -123,14 +133,12 @@
 
 <script setup>
 /* eslint-disable */
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
 const $q = useQuasar()
-const usuario = JSON.parse(
-  localStorage.getItem('usuario') || '{}'
-)
+const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
 
 const pacientes = ref([])
 const pacientesConMedicamentos = ref([])
@@ -148,7 +156,7 @@ const columns = [
   { name: 'dosis', label: 'Dosis', field: 'dosis', sortable: true },
   { name: 'dias', label: 'Días', field: 'dias', sortable: true },
   { name: 'horas', label: 'Horas', field: 'horas', sortable: true },
-  { name: 'acciones', label: 'Acciones', field: 'acciones' }
+  { name: 'acciones', label: 'Acciones', field: 'acciones' },
 ]
 
 const diasSemana = [
@@ -158,7 +166,7 @@ const diasSemana = [
   { label: 'Jueves', value: 'Jueves' },
   { label: 'Viernes', value: 'Viernes' },
   { label: 'Sábado', value: 'Sábado' },
-  { label: 'Domingo', value: 'Domingo' }
+  { label: 'Domingo', value: 'Domingo' },
 ]
 
 const editDialog = ref(false)
@@ -167,44 +175,45 @@ const editData = ref({
   nombre: '',
   dosis: '',
   dias: '',
-  horas: ''
+  horas: '',
 })
 
+const pacienteActual = computed(() => pacientes.value.find((p) => p.rut === rutPaciente.value))
+
 // 1) Carga inicial de pacientes y sus medicamentos
-onMounted(async () => {
+async function cargarPacientesConMedicamentos() {
   try {
-    const { data: pacs } = await api.get(
-      `/pacientes_por_cuidador/${usuario.rut}`
-    )
+    const { data: pacs } = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
     pacientes.value = pacs
     pacientesConMedicamentos.value = []
 
     for (const p of pacs) {
-      const { data: meds } = await api.get(
-        `/medicamentos_por_rut/${p.rut}`
-      )
+      const { data: meds } = await api.get(`/medicamentos_por_rut/${p.rut}`)
       pacientesConMedicamentos.value.push({ ...p, medicamentos: meds })
     }
   } catch (err) {
     console.error(err)
     $q.notify({ type: 'negative', message: 'Error al cargar pacientes' })
   }
-})
+}
+
+onMounted(cargarPacientesConMedicamentos)
 
 // 2) Al cambiar paciente, refresca solo esa tabla
-watch(rutPaciente, async (newRut) => {
+async function cargarMedicamentos(rut) {
   medicamentos.value = []
-  if (!newRut) return
-
+  if (!rut) return
   try {
-    const { data } = await api.get(
-      `/medicamentos_por_rut/${newRut}`
-    )
+    const { data } = await api.get(`/medicamentos_por_rut/${rut}`)
     medicamentos.value = data
   } catch (err) {
     console.error(err)
     $q.notify({ type: 'negative', message: 'Error al cargar medicamentos' })
   }
+}
+
+watch(rutPaciente, (newRut) => {
+  cargarMedicamentos(newRut)
 })
 
 function agregarHora(h) {
@@ -224,9 +233,8 @@ async function guardarEdicion() {
     await api.put(`/medicamentos/${editData.value.id}`, editData.value)
     $q.notify({ type: 'positive', message: 'Guardado exitoso' })
     editDialog.value = false
-    if (rutPaciente.value) {
-      await watch(rutPaciente).callback(rutPaciente.value)
-    }
+    await cargarMedicamentos(rutPaciente.value)
+    await cargarPacientesConMedicamentos()
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo guardar' })
   }
@@ -236,9 +244,8 @@ async function eliminarMedicamento(m) {
   try {
     await api.delete(`/medicamentos/${m.id}`)
     $q.notify({ type: 'positive', message: 'Eliminado exitoso' })
-    if (rutPaciente.value) {
-      await watch(rutPaciente).callback(rutPaciente.value)
-    }
+    await cargarMedicamentos(rutPaciente.value)
+    await cargarPacientesConMedicamentos()
   } catch {
     $q.notify({ type: 'negative', message: 'No se pudo eliminar' })
   }
@@ -252,12 +259,11 @@ async function agregarMedicamento() {
       dosis: dosis.value,
       dias: dias.value,
       horas: horas.value,
-      rut_paciente: rutPaciente.value
+      rut_paciente: rutPaciente.value,
     })
     $q.notify({ type: 'positive', message: 'Medicamento agregado' })
-    if (rutPaciente.value) {
-      await watch(rutPaciente).callback(rutPaciente.value)
-    }
+    await cargarMedicamentos(rutPaciente.value)
+    await cargarPacientesConMedicamentos()
     nombre.value = ''
     dosis.value = ''
     dias.value = []
