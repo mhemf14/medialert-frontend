@@ -8,7 +8,7 @@
 
       <q-form @submit.prevent="agregarMedicamento">
         <q-card-section class="q-gutter-md">
-          <!-- DEBUG: mostrar qué trae pacientes -->
+          <!-- DEBUG: ver pacientes traídos -->
           <p class="text-caption">DEBUG pacientes: {{ JSON.stringify(pacientes) }}</p>
 
           <q-select
@@ -78,7 +78,7 @@
       </q-card-section>
     </q-card>
 
-    <!-- Dialogo de edición -->
+    <!-- Diálogo de edición -->
     <q-dialog v-model="editDialog">
       <q-card style="min-width: 300px">
         <q-card-section class="text-h6">Editar Medicamento</q-card-section>
@@ -95,7 +95,7 @@
       </q-card>
     </q-dialog>
 
-    <!-- Sección pacientes con sus medicamentos -->
+    <!-- Lista de pacientes con sus medicamentos -->
     <q-card class="q-mt-md" v-if="pacientesConMedicamentos.length">
       <q-card-section class="bg-secondary text-white">
         <div class="text-h6">Pacientes con Medicamentos Asignados</div>
@@ -148,7 +148,7 @@ import { saveAs } from 'file-saver'
 
 const $q = useQuasar()
 
-// Campos del form
+// refs para el formulario
 const nombre = ref('')
 const dosis = ref('')
 const rutPaciente = ref('')
@@ -157,17 +157,17 @@ const horas = ref([])
 const horaTemporal = ref('')
 const loading = ref(false)
 
-// Usuario logueado
+// usuario logueado
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}')
 
-// Datos
+// datos
 const pacientes = ref([])
 const medicamentos = ref([])
 const editDialog = ref(false)
 const editData = ref({ id: null, nombre: '', dosis: '', dias: '', horas: '' })
 const pacientesConMedicamentos = ref([])
 
-// Columnas de la tabla
+// columnas
 const columns = [
   { name: 'nombre', label: 'Medicamento', field: 'nombre', sortable: true },
   { name: 'dosis', label: 'Dosis', field: 'dosis', sortable: true },
@@ -186,16 +186,17 @@ const diasSemana = [
   { label: 'Domingo', value: 'Domingo' },
 ]
 
+// un único onMounted
 onMounted(async () => {
   console.log('🚀 CuidadorPage montado; rut=', usuario.rut)
 
   try {
-    // 1) traer pacientes a cargo
+    // traer pacientes a cargo
     const r1 = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
     console.log('🤖 GET pacientes_por_cuidador →', r1.data)
     pacientes.value = r1.data
 
-    // 2) para cada paciente, traer sus medicamentos
+    // para cada paciente, traer sus medicamentos
     pacientesConMedicamentos.value = []
     for (const p of pacientes.value) {
       const r2 = await api.get(`/medicamentos_por_rut/${p.rut}`)
@@ -205,11 +206,11 @@ onMounted(async () => {
       })
     }
   } catch (err) {
-    console.error('❌ Error al inicializar cuidador page', err)
+    console.error('❌ Error al inicializar CuidadorPage:', err)
   }
 })
 
-// recarga la tabla cuando cambia el select
+// recargar tabla al cambiar paciente seleccionado
 watch(rutPaciente, async () => {
   if (!rutPaciente.value) {
     medicamentos.value = []
@@ -219,10 +220,11 @@ watch(rutPaciente, async () => {
     const r = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
     medicamentos.value = r.data
   } catch (e) {
-    console.error('Error cargarMedicamentos()', e)
+    console.error('Error al cargar medicamentos', e)
   }
 })
 
+// funciones utilitarias...
 function agregarHora(h) {
   if (!horas.value.includes(h)) horas.value.push(h)
 }
@@ -234,6 +236,7 @@ function abrirEditar(row) {
   editDialog.value = true
 }
 
+// edición
 async function guardarEdicion() {
   try {
     await api.put(`/medicamentos/${editData.value.id}`, editData.value)
@@ -248,6 +251,7 @@ async function guardarEdicion() {
   }
 }
 
+// eliminación
 async function eliminarMedicamento(row) {
   try {
     await api.delete(`/medicamentos/${row.id}`)
@@ -260,6 +264,7 @@ async function eliminarMedicamento(row) {
   }
 }
 
+// alta
 const agregarMedicamento = async () => {
   loading.value = true
   try {
@@ -274,7 +279,7 @@ const agregarMedicamento = async () => {
     // recarga tabla
     const r = await api.get(`/medicamentos_por_rut/${rutPaciente.value}`)
     medicamentos.value = r.data
-    // reset form (menos rutPaciente)
+    // reset form salvo rutPaciente
     nombre.value = ''
     dosis.value = ''
     dias.value = []
@@ -288,6 +293,7 @@ const agregarMedicamento = async () => {
   }
 }
 
+// exportar
 function exportarPDF(pac) {
   const doc = new jsPDF()
   doc.text(`Medicamentos de ${pac.nombre} (${pac.rut})`, 10, 10)
@@ -295,7 +301,6 @@ function exportarPDF(pac) {
   autoTable(doc, { head: [['Medicamento', 'Dosis', 'Días', 'Horas']], body: rows, startY: 20 })
   doc.save(`meds_${pac.rut}.pdf`)
 }
-
 function exportarExcel(pac) {
   const ws = XLSX.utils.json_to_sheet(pac.medicamentos)
   const wb = XLSX.utils.book_new()
