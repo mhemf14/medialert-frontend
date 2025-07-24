@@ -1,8 +1,11 @@
 <template>
   <q-page class="flex flex-center">
     <q-card style="width: 400px">
-      <q-card-section>
-        <div class="text-h6">Iniciar Sesión</div>
+      <q-card-section class="flex flex-center q-pb-none">
+        <img src="../assets/medical-logo.svg" alt="Logo médico" style="width: 80px;" />
+      </q-card-section>
+      <q-card-section class="q-pt-none">
+        <div class="text-h6 text-center">Iniciar Sesión</div>
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
@@ -18,23 +21,59 @@
         <q-btn label="Entrar" color="primary" @click="login" />
       </q-card-actions>
     </q-card>
+
+    <q-dialog v-model="loadingDialog" persistent>
+      <q-card>
+        <q-card-section class="row items-center q-pa-md">
+          <q-spinner color="primary" size="2em" />
+          <span class="q-ml-sm">Iniciando sesión...</span>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 
 // 🔧 Configuración
 const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
 
 const router = useRouter()
+const $q = useQuasar()
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
+const loadingDialog = ref(false)
+
+const validarRut = (valor: string) => {
+  const rutLimpio = valor.replace(/[^0-9kK]/g, '').toLowerCase()
+  if (rutLimpio.length < 2) {
+    return false
+  }
+  const cuerpo = rutLimpio.slice(0, -1)
+  const dvIngresado = rutLimpio.slice(-1)
+
+  let suma = 0
+  let factor = 2
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo.charAt(i)) * factor
+    factor = factor === 7 ? 2 : factor + 1
+  }
+  const dvEsperadoNum = 11 - (suma % 11)
+  const dvEsperado = dvEsperadoNum === 11 ? '0' : dvEsperadoNum === 10 ? 'k' : String(dvEsperadoNum)
+
+  return dvIngresado === dvEsperado
+}
 
 const login = async () => {
   error.value = ''
+  if (!validarRut(rut.value)) {
+    error.value = 'RUT inválido'
+    return
+  }
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
@@ -52,17 +91,30 @@ const login = async () => {
 
     localStorage.setItem('usuario', JSON.stringify(data))
 
+    $q.notify({
+      type: 'info',
+      message: 'Campaña activa: ¡recuerda revisar tus notificaciones!',
+    })
+
     const rol = data.rol?.toLowerCase().trim()
+    let destino = ''
 
     if (rol === 'cuidador') {
-      router.push('/cuidador')
+      destino = '/cuidador'
     } else if (rol === 'paciente') {
-      router.push('/paciente')
+      destino = '/paciente'
     } else if (rol === 'admin') {
-      router.push('/admin')
+      destino = '/admin'
     } else {
       error.value = 'Rol no reconocido'
+      return
     }
+
+    loadingDialog.value = true
+    setTimeout(() => {
+      loadingDialog.value = false
+      router.push(destino)
+    }, 3000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
     error.value = 'No se pudo conectar al servidor'
