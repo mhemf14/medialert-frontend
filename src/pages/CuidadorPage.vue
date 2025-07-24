@@ -175,6 +175,17 @@ const diasSemana = [
 ]
 
 onMounted(async () => {
+    console.log('🚀 CuidadorPage montado; rut de usuario =', usuario.rut)
+
+  try {
+    const res = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
+    console.log('🤖 GET /pacientes_por_cuidador →', res.data)
+    pacientes.value = res.data
+  }
+  catch (err) {
+    console.error('❌ Error al cargar pacientes', err)
+  }
+})
   try {
     // ← Aquí agregamos el console.log para depurar
     const res = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
