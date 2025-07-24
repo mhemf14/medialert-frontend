@@ -60,7 +60,7 @@
       </q-form>
     </q-card>
 
-    <!-- Tabla de medicamentos del paciente -->
+    <!-- Medicamentos individuales -->
     <q-card class="q-mt-md" v-if="medicamentos.length">
       <q-card-section class="bg-primary text-white">
         <div class="text-h6">Medicamentos del Paciente</div>
@@ -92,7 +92,7 @@
       </q-card>
     </q-dialog>
 
-    <!-- Lista completa de pacientes con sus medicamentos -->
+    <!-- Todos los pacientes con sus listas -->
     <q-card class="q-mt-md" v-if="pacientesConMedicamentos.length">
       <q-card-section class="bg-secondary text-white">
         <div class="text-h6">Pacientes con Medicamentos Asignados</div>
@@ -121,11 +121,8 @@ import { ref, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
-interface Paciente {
-  rut: string
-  nombre: string
-}
-interface Medicamento {
+type Paciente = { rut: string; nombre: string }
+type Medicamento = {
   id: number
   nombre: string
   dosis: string
@@ -136,7 +133,6 @@ interface Medicamento {
 const $q = useQuasar()
 const usuario = JSON.parse(localStorage.getItem('usuario') || '{}') as { rut: string }
 
-// Estado
 const pacientes = ref<Paciente[]>([])
 const pacientesConMedicamentos = ref<(Paciente & { medicamentos: Medicamento[] })[]>([])
 const rutPaciente = ref<string>('')
@@ -169,7 +165,7 @@ const diasSemana = [
 const editDialog = ref(false)
 const editData = ref<Medicamento>({ id: 0, nombre: '', dosis: '', dias: '', horas: '' })
 
-// 1) Traer pacientes y luego sus meds
+// al montar: traigo pacientes + sus meds
 onMounted(async () => {
   try {
     const { data: pacs } = await api.get<Paciente[]>(`/pacientes_por_cuidador/${usuario.rut}`)
@@ -186,7 +182,7 @@ onMounted(async () => {
   }
 })
 
-// 2) Refrescar la tabla de un solo paciente
+// cuando el select cambie, refresco solo esa tabla
 watch(rutPaciente, async (newRut) => {
   medicamentos.value = []
   if (!newRut) return
@@ -202,7 +198,6 @@ watch(rutPaciente, async (newRut) => {
 function agregarHora(h: string) {
   if (!horas.value.includes(h)) horas.value.push(h)
 }
-
 function eliminarHora(i: number) {
   horas.value.splice(i, 1)
 }
