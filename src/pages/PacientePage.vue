@@ -56,8 +56,10 @@ function toggleContraste() {
   modoContraste.value = !modoContraste.value
   if (modoContraste.value) {
     document.body.classList.add('high-contrast')
+    localStorage.setItem('highContrast', 'true')
   } else {
     document.body.classList.remove('high-contrast')
+    localStorage.setItem('highContrast', 'false')
   }
 }
 
@@ -97,6 +99,10 @@ function confirmarToma(med) {
 
 let timer
 onMounted(async () => {
+  if (localStorage.getItem('highContrast') === 'true') {
+    modoContraste.value = true
+    document.body.classList.add('high-contrast')
+  }
   const res = await fetch(
     `https://medialert-backend-1q8e.onrender.com/medicamentos_por_rut/${usuario.rut}`,
   )
