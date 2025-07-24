@@ -21,6 +21,12 @@
         <q-btn label="Entrar" color="primary" @click="login" />
       </q-card-actions>
     </q-card>
+    <q-dialog v-model="cargando" persistent>
+      <q-card class="row items-center q-pa-md">
+        <q-spinner class="q-mr-md" />
+        <span>Iniciando sesión...</span>
+      </q-card>
+    </q-dialog>
 
   </q-page>
 </template>
@@ -38,7 +44,7 @@ const $q = useQuasar()
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
-let loginDialog: any | null = null
+const cargando = ref(false)
 
 const validarRut = (valor: string) => {
   const rutLimpio = valor.replace(/[^0-9kK]/g, '').toLowerCase()
@@ -79,7 +85,7 @@ const login = async () => {
 
     if (!res.ok) {
       error.value = data.error || 'Error al iniciar sesión'
-      loginDialog?.hide()
+      cargando.value = false
       return
     }
 
@@ -104,22 +110,15 @@ const login = async () => {
       return
     }
 
-    loginDialog = $q.dialog({
-      progress: true,
-      message: 'Iniciando sesión...',
-      ok: false,
-      persistent: true,
-    })
-
+    cargando.value = true
     setTimeout(() => {
-      loginDialog?.hide()
-      loginDialog = null
+      cargando.value = false
       router.push(destino)
     }, 3000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
     error.value = 'No se pudo conectar al servidor'
-    loginDialog?.hide()
+    cargando.value = false
   }
 }
 
