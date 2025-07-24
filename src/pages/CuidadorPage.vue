@@ -142,8 +142,8 @@ const usuario = JSON.parse(
   localStorage.getItem('usuario') || '{}'
 ) as { rut: string }
 
-const pacientes = ref<Paciente[]>([])
-const pacientesConMedicamentos = ref<PacienteConMedicamento[]>([])
+const pacientes = ref([] as Paciente[])
+const pacientesConMedicamentos = ref([] as PacienteConMedicamento[])
 const rutPaciente = ref<string>('')
 const nombre = ref<string>('')
 const dosis = ref<string>('')
