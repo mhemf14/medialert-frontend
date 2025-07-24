@@ -76,7 +76,7 @@ const login = async () => {
     setTimeout(() => {
       cargando.value = false
       router.push(destino)
-    }, 6000)
+    }, 3000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
     if (err.response) {
