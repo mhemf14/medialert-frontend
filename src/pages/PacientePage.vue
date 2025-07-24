@@ -38,6 +38,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useQuasar } from 'quasar'
+import { api } from 'boot/axios'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
@@ -97,10 +98,7 @@ function confirmarToma(med) {
 
 let timer
 onMounted(async () => {
-  const res = await fetch(
-    `https://medialert-backend-1q8e.onrender.com/medicamentos_por_rut/${usuario.rut}`,
-  )
-  const data = await res.json()
+  const { data } = await api.get(`/medicamentos_por_rut/${usuario.rut}`)
 
   // Agregamos propiedad `confirmado` localmente para cada medicamento
   medicamentos.value = data.map((med) => ({ ...med, confirmado: false }))

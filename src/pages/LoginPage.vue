@@ -35,11 +35,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import { api } from 'boot/axios'
 
 const $q = useQuasar()
 const router = useRouter()
 
-const API_BASE_URL = 'https://medialert-backend-1q8e.onrender.com'
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
@@ -54,18 +54,10 @@ const login = async () => {
   }
 
   try {
-    const res = await fetch(`${API_BASE_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rut: rut.value, contrasena: contrasena.value }),
+    const { data } = await api.post('/login', {
+      rut: rut.value,
+      contrasena: contrasena.value,
     })
-
-    const data = await res.json()
-
-    if (!res.ok) {
-      error.value = data.error || 'Error al iniciar sesión'
-      return
-    }
 
     localStorage.setItem('usuario', JSON.stringify(data))
 
@@ -89,7 +81,11 @@ const login = async () => {
     }, 6000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
-    error.value = 'No se pudo conectar al servidor'
+    if (err.response) {
+      error.value = err.response.data?.error || 'Error al iniciar sesión'
+    } else {
+      error.value = 'No se pudo conectar al servidor'
+    }
   }
 }
 
