@@ -44,7 +44,7 @@ const registrar = async () => {
   error.value = ''
   success.value = ''
   try {
-    const { data } = await api.post('/registro', {
+    await api.post('/registro', {
       nombre: nombre.value,
       telefono: telefono.value,
       rut: rut.value,
