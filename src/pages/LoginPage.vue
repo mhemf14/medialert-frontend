@@ -1,6 +1,9 @@
 <template>
   <q-page class="flex flex-center">
     <q-card style="width: 400px">
+      <q-card-section class="text-center q-pb-none">
+        <q-img :src="logoImg" alt="Logo" style="width: 150px" class="q-mx-auto q-my-md" />
+      </q-card-section>
       <q-card-section>
         <div class="text-h6">Iniciar Sesión</div>
       </q-card-section>
@@ -35,6 +38,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from 'boot/axios'
+import logoImg from '../assets/LOGO.png'
 
 const router = useRouter()
 
