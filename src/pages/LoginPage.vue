@@ -21,6 +21,7 @@
         <q-btn label="Entrar" color="primary" @click="login" />
       </q-card-actions>
     </q-card>
+
   </q-page>
 </template>
 
@@ -37,6 +38,7 @@ const $q = useQuasar()
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
+let loginDialog: any | null = null
 
 const validarRut = (valor: string) => {
   const rutLimpio = valor.replace(/[^0-9kK]/g, '').toLowerCase()
@@ -64,6 +66,7 @@ const login = async () => {
     error.value = 'RUT inválido'
     return
   }
+
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
@@ -87,19 +90,34 @@ const login = async () => {
     })
 
     const rol = data.rol?.toLowerCase().trim()
+    let destino = ''
 
     if (rol === 'cuidador') {
-      router.push('/cuidador')
+      destino = '/cuidador'
     } else if (rol === 'paciente') {
-      router.push('/paciente')
+      destino = '/paciente'
     } else if (rol === 'admin') {
-      router.push('/admin')
+      destino = '/admin'
     } else {
       error.value = 'Rol no reconocido'
+      return
     }
+
+    loginDialog = $q.dialog({
+      progress: true,
+      message: 'Iniciando sesión...',
+      ok: false,
+      persistent: true,
+    })
+
+    setTimeout(() => {
+      loginDialog?.hide()
+      router.push(destino)
+    }, 3000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
     error.value = 'No se pudo conectar al servidor'
+    loginDialog?.hide()
   }
 }
 
