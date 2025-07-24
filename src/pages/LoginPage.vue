@@ -21,6 +21,13 @@
         <q-btn label="Entrar" color="primary" @click="login" />
       </q-card-actions>
     </q-card>
+    <q-dialog v-model="cargando" persistent>
+      <q-card class="row items-center q-pa-md">
+        <q-spinner class="q-mr-md" />
+        <span>Iniciando sesión...</span>
+      </q-card>
+    </q-dialog>
+
   </q-page>
 </template>
 
@@ -37,6 +44,7 @@ const $q = useQuasar()
 const rut = ref('')
 const contrasena = ref('')
 const error = ref('')
+const cargando = ref(false)
 
 const validarRut = (valor: string) => {
   const rutLimpio = valor.replace(/[^0-9kK]/g, '').toLowerCase()
@@ -64,6 +72,9 @@ const login = async () => {
     error.value = 'RUT inválido'
     return
   }
+
+  cargando.value = true
+
   try {
     const res = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
@@ -76,6 +87,7 @@ const login = async () => {
 
     if (!res.ok) {
       error.value = data.error || 'Error al iniciar sesión'
+      cargando.value = false
       return
     }
 
@@ -87,19 +99,28 @@ const login = async () => {
     })
 
     const rol = data.rol?.toLowerCase().trim()
+    let destino = ''
 
     if (rol === 'cuidador') {
-      router.push('/cuidador')
+      destino = '/cuidador'
     } else if (rol === 'paciente') {
-      router.push('/paciente')
+      destino = '/paciente'
     } else if (rol === 'admin') {
-      router.push('/admin')
+      destino = '/admin'
     } else {
       error.value = 'Rol no reconocido'
+      cargando.value = false
+      return
     }
+
+    setTimeout(() => {
+      cargando.value = false
+      router.push(destino)
+    }, 3000)
   } catch (err) {
     console.error('❌ Error al conectar al backend:', err)
     error.value = 'No se pudo conectar al servidor'
+    cargando.value = false
   }
 }
 
