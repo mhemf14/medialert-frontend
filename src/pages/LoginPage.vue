@@ -73,7 +73,7 @@ const login = async () => {
       return
     }
 
-    // Mostrar popup de carga
+    // ✅ Mostrar popup de carga durante 4 segundos
     const dialog = $q.dialog({
       title: 'Ingresando',
       message: 'Por favor espera...',
@@ -82,7 +82,6 @@ const login = async () => {
       ok: false,
     })
 
-    // Esperar 4 segundos antes de redirigir
     setTimeout(() => {
       dialog.hide()
       router.push(destino)
