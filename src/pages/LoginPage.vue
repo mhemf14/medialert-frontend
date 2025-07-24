@@ -37,7 +37,6 @@ const error = ref('')
 const login = async () => {
   error.value = ''
 
-  // Validar campos vacíos
   if (!rut.value || !contrasena.value) {
     error.value = 'Debe ingresar su RUT y contraseña'
     return
@@ -62,18 +61,15 @@ const login = async () => {
     const rol = data.rol?.toLowerCase().trim()
     let destino = ''
 
-    if (rol === 'cuidador') {
-      destino = '/cuidador'
-    } else if (rol === 'paciente') {
-      destino = '/paciente'
-    } else if (rol === 'admin') {
-      destino = '/admin'
-    } else {
+    if (rol === 'cuidador') destino = '/cuidador'
+    else if (rol === 'paciente') destino = '/paciente'
+    else if (rol === 'admin') destino = '/admin'
+    else {
       error.value = 'Rol no reconocido'
       return
     }
 
-    // ✅ Mostrar popup de carga durante 4 segundos
+    // ✅ Mostrar diálogo de carga
     const dialog = $q.dialog({
       title: 'Ingresando',
       message: 'Por favor espera...',
@@ -82,6 +78,7 @@ const login = async () => {
       ok: false,
     })
 
+    // Esperar 4 segundos y luego redirigir
     setTimeout(() => {
       dialog.hide()
       router.push(destino)
