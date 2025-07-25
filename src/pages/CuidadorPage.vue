@@ -99,20 +99,11 @@
           <q-input v-model="editData.dosis" label="Dosis" />
           <div>
             <div class="text-subtitle2">Días:</div>
-            <q-option-group
-              type="checkbox"
-              :options="diasSemana"
-              v-model="editDias"
-              inline
-            />
+            <q-option-group type="checkbox" :options="diasSemana" v-model="editDias" inline />
           </div>
           <div>
             <div class="text-subtitle2">Horas:</div>
-            <q-time
-              v-model="editHoraTemporal"
-              format24h
-              @update:model-value="agregaHoraEdicion"
-            />
+            <q-time v-model="editHoraTemporal" format24h @update:model-value="agregaHoraEdicion" />
             <div class="q-mt-sm">
               <q-chip
                 v-for="(h, i) in editHoras"
@@ -151,13 +142,7 @@
                 </q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-btn
-                  flat
-                  round
-                  icon="edit"
-                  color="primary"
-                  @click="abrirEditar(med)"
-                />
+                <q-btn flat round icon="edit" color="primary" @click="abrirEditar(med)" />
                 <q-btn
                   flat
                   round
@@ -202,6 +187,14 @@ const columns = [
   { name: 'acciones', label: 'Acciones', field: 'acciones' },
 ]
 
+function normalizarMedicamento(m) {
+  return {
+    ...m,
+    dias: Array.isArray(m.dias) ? m.dias.join(', ') : m.dias,
+    horas: Array.isArray(m.horas) ? m.horas.join(', ') : m.horas,
+  }
+}
+
 const diasSemana = [
   { label: 'Lunes', value: 'Lunes' },
   { label: 'Martes', value: 'Martes' },
@@ -235,7 +228,10 @@ async function cargarPacientesConMedicamentos() {
 
     for (const p of pacs) {
       const { data: meds } = await api.get(`/medicamentos_por_rut/${p.rut}`)
-      pacientesConMedicamentos.value.push({ ...p, medicamentos: meds })
+      pacientesConMedicamentos.value.push({
+        ...p,
+        medicamentos: meds.map(normalizarMedicamento),
+      })
     }
   } catch (err) {
     console.error(err)
@@ -251,7 +247,7 @@ async function cargarMedicamentos(rut) {
   if (!rut) return
   try {
     const { data } = await api.get(`/medicamentos_por_rut/${rut}`)
-    medicamentos.value = data
+    medicamentos.value = data.map(normalizarMedicamento)
   } catch (err) {
     console.error(err)
     $q.notify({ type: 'negative', message: 'Error al cargar medicamentos' })
@@ -278,8 +274,18 @@ function eliminarHoraEdicion(i) {
 
 function abrirEditar(m) {
   editData.value = { ...m }
-  editDias.value = m.dias ? m.dias.split(',').map((d) => d.trim()) : []
-  editHoras.value = m.horas ? m.horas.split(',').map((h) => h.trim()) : []
+  const diasParsed = Array.isArray(m.dias)
+    ? m.dias
+    : m.dias
+      ? m.dias.split(',').map((d) => d.trim())
+      : []
+  const horasParsed = Array.isArray(m.horas)
+    ? m.horas
+    : m.horas
+      ? m.horas.split(',').map((h) => h.trim())
+      : []
+  editDias.value = diasParsed
+  editHoras.value = horasParsed
   editHoraTemporal.value = ''
   editDialog.value = true
 }
@@ -289,8 +295,8 @@ async function guardarEdicion() {
     await api.put(`/medicamentos/${editData.value.id}`, {
       nombre: editData.value.nombre,
       dosis: editData.value.dosis,
-      dias: editDias.value,
-      horas: editHoras.value,
+      dias: Array.isArray(editDias.value) ? editDias.value.join(', ') : editDias.value,
+      horas: Array.isArray(editHoras.value) ? editHoras.value.join(', ') : editHoras.value,
     })
     $q.notify({ type: 'positive', message: 'Guardado exitoso' })
     editDialog.value = false
@@ -318,8 +324,8 @@ async function agregarMedicamento() {
     await api.post(`/medicamentos_por_rut`, {
       nombre: nombre.value,
       dosis: dosis.value,
-      dias: dias.value,
-      horas: horas.value,
+      dias: Array.isArray(dias.value) ? dias.value.join(', ') : dias.value,
+      horas: Array.isArray(horas.value) ? horas.value.join(', ') : horas.value,
       rut_paciente: rutPaciente.value,
     })
     $q.notify({ type: 'positive', message: 'Medicamento agregado' })
