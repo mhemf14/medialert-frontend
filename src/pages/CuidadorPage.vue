@@ -295,10 +295,10 @@ function abrirEditar(m) {
 async function guardarEdicion() {
   try {
     await api.put(`/medicamentos/${editData.value.id}`, {
-      nombre: editData.value.nombre,
-      dosis: editData.value.dosis,
-      dias: Array.isArray(editDias.value) ? editDias.value.join(', ') : editDias.value,
-      horas: Array.isArray(editHoras.value) ? editHoras.value.join(', ') : editHoras.value,
+      nombre: String(editData.value.nombre),
+      dosis: String(editData.value.dosis),
+      dias: editDias.value,
+      horas: editHoras.value,
     })
     $q.notify({ type: 'positive', message: 'Guardado exitoso' })
     editDialog.value = false
@@ -335,12 +335,12 @@ async function agregarMedicamento() {
   loading.value = true
   try {
     const resp = await api.post('/medicamentos_por_rut', {
-      nombre: nombre.value,
-      dosis: dosis.value,
+      nombre: String(nombre.value),
+      dosis: String(dosis.value),
       dias: dias.value,
       horas: horas.value,
-      rut_paciente: rutPaciente.value,
-      rut_cuidador: usuario.rut,
+      rut_paciente: String(rutPaciente.value),
+      rut_cuidador: String(usuario.rut),
     })
     if (process.env.NODE_ENV !== 'production') {
       console.log('✅ POST /medicamentos_por_rut response:', resp.data)
