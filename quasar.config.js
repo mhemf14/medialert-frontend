@@ -46,7 +46,7 @@ export default defineConfig((/* ctx */) => {
       publicPath: './',
       // analyze: true,
       env: {
-        API_URL: process.env.API_URL || 'http://localhost:3000',
+        API_URL: process.env.API_URL || 'https://medialert-backend-1q8e.onrender.com',
       },
       // rawDefine: {}
       // ignorePublicFolder: true,
