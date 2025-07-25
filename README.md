@@ -43,12 +43,12 @@ quasar build
 ```
 
 ### API base URL
-Set `API_URL` to change the backend endpoint used by Axios.
+Set `API_URL` to change the backend endpoint used by Axios. You can also create a `.env` file with this variable so it is picked up automatically.
 
 ```bash
 API_URL=https://example.com quasar dev
 ```
-If not provided, it defaults to `http://localhost:3000`.
+If not provided, it defaults to `https://medialert-backend-1q8e.onrender.com`.
 
 ### Customize the configuration
 See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
