@@ -160,7 +160,6 @@
 </template>
 
 <script setup>
-/* eslint-disable */
 import { ref, onMounted, watch, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
