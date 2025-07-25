@@ -42,5 +42,13 @@ npm run format
 quasar build
 ```
 
+### API base URL
+Set `API_URL` to change the backend endpoint used by Axios.
+
+```bash
+API_URL=https://example.com quasar dev
+```
+If not provided, it defaults to `http://localhost:3000`.
+
 ### Customize the configuration
 See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).

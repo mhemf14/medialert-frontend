@@ -2,7 +2,7 @@ import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://medialert-backend-1q8e.onrender.com',
+  baseURL: process.env.API_URL || 'http://localhost:3000',
 })
 
 export default boot(({ app }) => {
