@@ -339,6 +339,7 @@ async function agregarMedicamento() {
       dias: Array.isArray(dias.value) ? dias.value.join(', ') : dias.value,
       horas: Array.isArray(horas.value) ? horas.value.join(', ') : horas.value,
       rut_paciente: rutPaciente.value,
+      rut_cuidador: usuario.rut,
     })
     if (process.env.NODE_ENV !== 'production') {
       console.log('✅ POST /medicamentos_por_rut response:', resp.data)
