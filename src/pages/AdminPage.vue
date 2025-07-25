@@ -104,7 +104,9 @@ const cargarAsignaciones = async () => {
   try {
     const res = await api.get('/admin/asignaciones')
     asignaciones.value = res.data
-    console.log('Asignaciones:', res.data)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Asignaciones:', res.data)
+    }
   } catch (err) {
     error.value = 'No se pudieron cargar las asignaciones'
     console.error(err)
@@ -129,7 +131,9 @@ function guardarAsignacion() {
 
 function eliminarAsignacion(row) {
   // Aquí podrías eliminar la asignación en el backend
-  console.log('Eliminar asignación', row)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Eliminar asignación', row)
+  }
 }
 
 onMounted(cargarAsignaciones)

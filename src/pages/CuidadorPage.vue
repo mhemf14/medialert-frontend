@@ -322,13 +322,15 @@ async function eliminarMedicamento(row) {
 }
 
 async function agregarMedicamento() {
-  console.log('👉 agregarMedicamento() called with:', {
-    nombre: nombre.value,
-    dosis: dosis.value,
-    dias: dias.value,
-    horas: horas.value,
-    rut_paciente: rutPaciente.value,
-  })
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('👉 agregarMedicamento() called with:', {
+      nombre: nombre.value,
+      dosis: dosis.value,
+      dias: dias.value,
+      horas: horas.value,
+      rut_paciente: rutPaciente.value,
+    })
+  }
 
   loading.value = true
   try {
@@ -339,7 +341,9 @@ async function agregarMedicamento() {
       horas: Array.isArray(horas.value) ? horas.value.join(', ') : horas.value,
       rut_paciente: rutPaciente.value,
     })
-    console.log('✅ POST /medicamentos_por_rut response:', resp.data)
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ POST /medicamentos_por_rut response:', resp.data)
+    }
     $q.notify({ type: 'positive', message: 'Medicamento agregado' })
     await cargarMedicamentos(rutPaciente.value)
     await cargarPacientesConMedicamentos()
