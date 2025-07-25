@@ -319,15 +319,24 @@ async function eliminarMedicamento(row) {
 }
 
 async function agregarMedicamento() {
+  console.log('👉 agregarMedicamento() called with:', {
+    nombre: nombre.value,
+    dosis: dosis.value,
+    dias: dias.value,
+    horas: horas.value,
+    rut_paciente: rutPaciente.value,
+  })
+
   loading.value = true
   try {
-    await api.post(`/medicamentos_por_rut`, {
+    const resp = await api.post('/medicamentos_por_rut', {
       nombre: nombre.value,
       dosis: dosis.value,
       dias: Array.isArray(dias.value) ? dias.value.join(', ') : dias.value,
       horas: Array.isArray(horas.value) ? horas.value.join(', ') : horas.value,
       rut_paciente: rutPaciente.value,
     })
+    console.log('✅ POST /medicamentos_por_rut response:', resp.data)
     $q.notify({ type: 'positive', message: 'Medicamento agregado' })
     await cargarMedicamentos(rutPaciente.value)
     await cargarPacientesConMedicamentos()
@@ -335,7 +344,8 @@ async function agregarMedicamento() {
     dosis.value = ''
     dias.value = []
     horas.value = []
-  } catch {
+  } catch (err) {
+    console.error('❌ POST /medicamentos_por_rut failed:', err)
     $q.notify({ type: 'negative', message: 'No se pudo agregar' })
   } finally {
     loading.value = false
