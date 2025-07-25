@@ -328,6 +328,7 @@ async function agregarMedicamento() {
       dias: dias.value,
       horas: horas.value,
       rut_paciente: rutPaciente.value,
+      rut_cuidador: usuario.rut,
     })
   }
 
@@ -336,8 +337,8 @@ async function agregarMedicamento() {
     const resp = await api.post('/medicamentos_por_rut', {
       nombre: nombre.value,
       dosis: dosis.value,
-      dias: Array.isArray(dias.value) ? dias.value.join(', ') : dias.value,
-      horas: Array.isArray(horas.value) ? horas.value.join(', ') : horas.value,
+      dias: dias.value,
+      horas: horas.value,
       rut_paciente: rutPaciente.value,
       rut_cuidador: usuario.rut,
     })
