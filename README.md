@@ -9,6 +9,12 @@ yarn
 npm install
 ```
 
+Before running `quasar dev` or `npm run lint`, install the dependencies:
+
+```bash
+npm install
+```
+
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 ```bash
 quasar dev
