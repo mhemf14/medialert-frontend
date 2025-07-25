@@ -224,6 +224,9 @@ async function cargarPacientesConMedicamentos() {
   try {
     const { data: pacs } = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
     pacientes.value = pacs
+    if (!rutPaciente.value && pacs.length) {
+      rutPaciente.value = pacs[0].rut
+    }
     pacientesConMedicamentos.value = []
 
     for (const p of pacs) {
