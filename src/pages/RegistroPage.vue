@@ -52,6 +52,13 @@ const registrar = async () => {
       rol: rol.value,
     })
 
+    // Guarda el nuevo paciente en localStorage para que el cuidador lo vea
+    if (rol.value === 'paciente') {
+      const almacenados = JSON.parse(localStorage.getItem('pacientesRegistrados') || '[]')
+      almacenados.push({ rut: rut.value, nombre: nombre.value })
+      localStorage.setItem('pacientesRegistrados', JSON.stringify(almacenados))
+    }
+
     success.value = 'Registro exitoso'
     setTimeout(() => router.push('/login'), 1000)
   } catch (err) {

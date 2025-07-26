@@ -222,18 +222,35 @@ const pacienteActual = computed(() => pacientes.value.find((p) => p.rut === rutP
 async function cargarPacientesConMedicamentos() {
   try {
     const { data: pacs } = await api.get(`/pacientes_por_cuidador/${usuario.rut}`)
-    pacientes.value = pacs
-    if (!rutPaciente.value && pacs.length) {
-      rutPaciente.value = pacs[0].rut
+
+    // Agrega pacientes registrados localmente que aún no aparecen en la API
+    const locales = JSON.parse(localStorage.getItem('pacientesRegistrados') || '[]')
+    const todos = [...pacs]
+    locales.forEach((p) => {
+      if (!todos.some((ex) => ex.rut === p.rut)) {
+        todos.push(p)
+      }
+    })
+
+    pacientes.value = todos
+    if (!rutPaciente.value && todos.length) {
+      rutPaciente.value = todos[0].rut
     }
     pacientesConMedicamentos.value = []
 
-    for (const p of pacs) {
-      const { data: meds } = await api.get(`/medicamentos_por_rut/${p.rut}`)
-      pacientesConMedicamentos.value.push({
-        ...p,
-        medicamentos: meds.map(normalizarMedicamento),
-      })
+    for (const p of todos) {
+      try {
+        const { data: meds } = await api.get(`/medicamentos_por_rut/${p.rut}`)
+        pacientesConMedicamentos.value.push({
+          ...p,
+          medicamentos: meds.map(normalizarMedicamento),
+        })
+      } catch {
+        pacientesConMedicamentos.value.push({
+          ...p,
+          medicamentos: [],
+        })
+      }
     }
   } catch (err) {
     console.error(err)
